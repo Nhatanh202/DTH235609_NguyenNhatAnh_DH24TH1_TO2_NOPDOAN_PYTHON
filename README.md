@@ -7,7 +7,7 @@
 
 ---
 
-## 👥 THÔNG TIN SINH VIÊN THỰC HIỆN
+## THÀNH VIÊN
 
 | STT | Họ và tên | MSSV | Lớp | Nhóm | Tổ |
 |-----|------------|------|------|------|----|
