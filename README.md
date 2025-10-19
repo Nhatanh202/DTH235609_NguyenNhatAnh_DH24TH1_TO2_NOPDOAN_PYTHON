@@ -1,9 +1,9 @@
 # BÁO CÁO ĐỒ ÁN  
 ## CHUYÊN ĐỀ PYTHON (COS525)
 
-**Đề tài:** XÂY DỰNG ỨNG DỤNG QUẢN LÝ XE MÁY
-**Giảng viên hướng dẫn:** ThS. Nguyễn Ngọc Minh  
-**Trường:** Đại học An Giang – Khoa Công nghệ Thông tin  
+- **Đề tài:** XÂY DỰNG ỨNG DỤNG QUẢN LÝ XE MÁY
+- **Giảng viên hướng dẫn:** ThS. Nguyễn Ngọc Minh  
+- **Trường:** Đại học An Giang – Khoa Công nghệ Thông tin  
 
 ---
 
