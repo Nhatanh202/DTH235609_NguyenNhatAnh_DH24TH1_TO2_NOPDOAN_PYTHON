@@ -77,15 +77,6 @@ QuanLyXeMay/
 
 ---
 
-## 6. THÔNG TIN HỌC PHẦN
-
-- **Tên học phần:** Chuyên đề Python (COS525)  
-- **Học kỳ:** HK1 – Năm học 2025–2026  
-- **Khoa:** Công nghệ Thông tin – Trường Đại học An Giang  
-- **Giảng viên hướng dẫn:** ThS. Nguyễn Ngọc Minh  
-
----
-
 ## 6. TÀI LIỆU THAM KHẢO
 
 - Tài liệu hướng dẫn đồ án môn Python – ThS. Nguyễn Ngọc Minh  
