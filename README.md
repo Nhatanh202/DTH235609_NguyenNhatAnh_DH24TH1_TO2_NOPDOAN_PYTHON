@@ -1,76 +1,78 @@
-# BÁO CÁO ĐỒ ÁN  
-## CHUYÊN ĐỀ PYTHON (COS525)
+🏍️ QUẢN LÝ XE MÁY (Motorbike Management System)
+Đồ án Chuyên đề Python (COS525) - Trường Đại học An Giang
 
-- **Đề tài:** XÂY DỰNG ỨNG DỤNG QUẢN LÝ XE MÁY
-- **Giảng viên hướng dẫn:** ThS. Nguyễn Ngọc Minh  
-- **Trường:** Đại học An Giang – Khoa Công nghệ Thông tin  
+🌟 TÓM TẮT DỰ ÁN
+Đây là ứng dụng máy tính để bàn (Desktop Application) được xây dựng bằng Python nhằm cung cấp một công cụ trực quan và hiệu quả để Quản lý thông tin xe máy (Thêm, Sửa, Xóa, Lưu và Tìm kiếm). Ứng dụng sử dụng giao diện đồ họa Tkinter và lưu trữ dữ liệu bền vững bằng MySQL.
 
----
+Tính năng nổi bật
+Hỗ trợ CRUD đầy đủ (Create, Read, Update, Delete) cho dữ liệu xe máy.
 
-## THÀNH VIÊN
+Giao diện người dùng trực quan và thân thiện, dễ dàng thao tác.
 
-| STT | Họ và tên | MSSV | Lớp | Nhóm | Tổ |
-|-----|------------|------|------|------|----|
-| 1 | Nguyễn Nhất Anh | DH235609 | DH24TH1 | Nhóm 1 | Tổ 2 |
-| 2 | Phạm Hữu Huy | DH235665 | DH24TH1 | Nhóm 1 | Tổ 2 |
+Khả năng Tìm kiếm thông minh theo nhiều tiêu chí.
 
----
+Sử dụng thư viện tkcalendar để chọn ngày tháng tiện lợi.
 
-Đề tài **“Quản lý xe máy”** nhằm xây dựng một ứng dụng đơn giản giúp người dùng thực hiện các thao tác **thêm, sửa, xóa, lưu và tìm kiếm thông tin xe máy** thông qua giao diện trực quan được phát triển bằng **Python – Tkinter** và lưu trữ dữ liệu bằng **MySQL**.
+🚀 ĐỘI NGŨ PHÁT TRIỂN
+#	Họ và tên	MSSV	Lớp
+1	Nguyễn Nhất Anh	DH235609	DH24TH1
+2	Phạm Hữu Huy	DH235665	DH24TH1
 
----
+Giảng viên hướng dẫn: ThS. Nguyễn Ngọc Minh
 
-## 1. TỔNG QUAN VÀ CƠ SỞ LÝ THUYẾT
+🛠️ CÔNG NGHỆ SỬ DỤNG
+Lĩnh vực	Công cụ/Thư viện	Mục đích chính
+Ngôn ngữ	Python	Phát triển cốt lõi (Áp dụng OOP)
+Giao diện (GUI)	Tkinter	Xây dựng giao diện Desktop (Native)
+Cơ sở dữ liệu	MySQL	Hệ quản trị CSDL để lưu trữ dữ liệu
+Thư viện	mysql-connector-python	Kết nối và thao tác SQL trong Python
+Thư viện	tkcalendar, pillow	Chọn ngày, xử lý/hiển thị hình ảnh
+IDE Khuyến nghị	Visual Studio Code / PyCharm	Môi trường phát triển
 
-### a) Kiến thức áp dụng
-- Lập trình hướng đối tượng trong Python  
-- Xây dựng giao diện đồ họa người dùng với **Tkinter**  
-- Kết nối và xử lý dữ liệu với **MySQL**  
-- Sử dụng `mysql-connector-python` để truy vấn CSDL  
-- Thao tác CRUD (Create, Read, Update, Delete)  
-- Áp dụng thư viện `tkcalendar` cho chọn ngày  
+📦 CẤU TRÚC THƯ MỤC
+Cấu trúc dự án được tổ chức theo mô hình module, giúp dễ dàng quản lý và bảo trì code:
 
-### b) Công nghệ sử dụng
-
-| Thành phần | Công nghệ |
-|-------------|------------|
-| Ngôn ngữ lập trình | **Python** |
-| Giao diện người dùng | **Tkinter** |
-| Cơ sở dữ liệu | **MySQL** |
-| Thư viện hỗ trợ | `mysql-connector-python`, `tkcalendar`, `pillow` |
-| IDE khuyến nghị | Visual Studio Code / PyCharm |
-
----
-
-## 3. CẤU TRÚC THƯ MỤC DỰ ÁN  
 QuanLyXeMay/
-├── main.py                  # File chính chạy ứng dụng
+├── main.py                  # 🚀 File chính chạy ứng dụng & Xử lý giao diện Tkinter
 ├── database/
-│   ├── connect.py           # Kết nối MySQL
-│   └── setup.sql            # Câu lệnh tạo cơ sở dữ liệu & bảng
+│   ├── connect.py           # Thiết lập kết nối CSDL (MySQL)
+│   └── setup.sql            # Script SQL tạo DB & Bảng
 ├── modules/
-│   ├── crud.py              # Các hàm thêm, sửa, xóa, tìm kiếm
-│   └── utils.py             # Hàm tiện ích khác (validate, format,...)
+│   ├── crud.py              # Các logic nghiệp vụ: Thêm, Sửa, Xóa, Tìm kiếm
+│   └── utils.py             # Hàm tiện ích (Validate, Format,...)
 ├── assets/
 │   ├── icons/               # Icon, hình ảnh giao diện
 │   └── logo.png
-├── README.md                # Mô tả dự án
-└── requirements.txt         # Danh sách thư viện cần
+├── README.md                # Mô tả dự án (File này)
+└── requirements.txt         # Danh sách thư viện cần cài đặt
+⚙️ HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY
+Thực hiện các bước sau để thiết lập và chạy ứng dụng trên máy tính của bạn:
 
----
+1. Yêu cầu Tiên quyết
+Đã cài đặt Python 3.6+.
 
-## 4. KIẾN THỨC VẬN DỤNG  
-- Lập trình Python kết hợp GUI và cơ sở dữ liệu.
-- Kỹ thuật CRUD (Thêm – Sửa – Xóa – Xem).
-- Tạo giao diện bằng Tkinter và Treeview.
-- Kết nối và xử lý dữ liệu với MySQL.
-- Kỹ năng làm việc nhóm và quản lý dự án phần mềm nhỏ.
+Đã cài đặt và khởi chạy MySQL Server.
 
----
+2. Thiết lập Môi trường
+Mở Terminal/CMD trong thư mục gốc của dự án và cài đặt các thư viện Python cần thiết:
 
-## 5. TÀI LIỆU THAM KHẢO
+Bash
 
-- Tài liệu hướng dẫn đồ án môn Python – ThS. Nguyễn Ngọc Minh  
-- [Python Official Documentation](https://docs.python.org/3/)  
-- [Tkinter Library Guide](https://docs.python.org/3/library/tkinter.html)  
-- [MySQL Documentation](https://dev.mysql.com/doc/)
+pip install -r requirements.txt
+3. Cấu hình Cơ sở dữ liệu
+Mở MySQL Workbench hoặc một công cụ quản lý CSDL tương tự.
+
+Thực thi các lệnh SQL trong file database/setup.sql để tạo database quanlyxemay và bảng xemay.
+
+Kiểm tra và cập nhật thông tin đăng nhập MySQL trong file database/connect.py (nếu thông tin kết nối khác với mặc định: user, password).
+
+4. Khởi chạy Ứng dụng
+Chạy file chính của dự án:
+
+Bash
+
+python main.py
+📸 DEMO GIAO DIỆN
+
+
+Cảm ơn bạn đã xem qua đồ án!
