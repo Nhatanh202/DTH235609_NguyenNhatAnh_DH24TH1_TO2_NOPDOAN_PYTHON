@@ -45,52 +45,6 @@ Trong thời đại công nghệ thông tin phát triển mạnh mẽ, việc qu
 
 ---
 
-# BÁO CÁO ĐỒ ÁN  
-## CHUYÊN ĐỀ PYTHON (COS525)
-
-**Đề tài:** XÂY DỰNG ỨNG DỤNG QUẢN LÝ XE MÁY BẰNG PYTHON, TKINTER VÀ MYSQL  
-**Giảng viên hướng dẫn:** ThS. Nguyễn Ngọc Minh  
-**Trường:** Đại học An Giang – Khoa Công nghệ Thông tin  
-
----
-
-## THÔNG TIN SINH VIÊN THỰC HIỆN
-
-| STT | Họ và tên | MSSV | Lớp | Nhóm | Tổ |
-|-----|------------|------|------|------|----|
-| 1 | Nguyễn Văn A | DH24TH001 | DH24TH1 | Nhóm 1 | Tổ 2 |
-| 2 | Nguyễn Văn B | DH24TH002 | DH24TH1 | Nhóm 1 | Tổ 2 |
-
----
-
-## 1. ĐẶT VẤN ĐỀ
-
-Trong thời đại công nghệ thông tin phát triển mạnh mẽ, việc quản lý thông tin xe máy trong các cửa hàng hoặc đại lý trở nên cần thiết để tiết kiệm thời gian và giảm sai sót.  
-Đề tài “Quản lý xe máy” được thực hiện nhằm xây dựng một ứng dụng giúp người dùng dễ dàng thêm, sửa, xóa, tìm kiếm và lưu trữ thông tin xe máy bằng ngôn ngữ Python, giao diện Tkinter và cơ sở dữ liệu MySQL.
-
----
-
-## 2. TỔNG QUAN VÀ CƠ SỞ LÝ THUYẾT
-
-### a) Kiến thức áp dụng
-- Lập trình hướng đối tượng trong Python  
-- Thiết kế giao diện người dùng bằng Tkinter  
-- Kết nối cơ sở dữ liệu MySQL bằng thư viện `mysql-connector-python`  
-- Sử dụng `tkcalendar` để nhập ngày sản xuất hoặc bảo hành  
-- Thao tác CRUD (Create, Read, Update, Delete)  
-
-### b) Công nghệ sử dụng
-
-| Thành phần | Công nghệ |
-|-------------|------------|
-| Ngôn ngữ lập trình | Python 3.x |
-| Giao diện người dùng | Tkinter |
-| Cơ sở dữ liệu | MySQL |
-| Thư viện hỗ trợ | mysql-connector-python, tkcalendar, pillow |
-| IDE khuyến nghị | Visual Studio Code / PyCharm |
-
----
-
 ## 3. CẤU TRÚC THƯ MỤC DỰ ÁN  
 QuanLyXeMay/
 ├── main.py                  # File chính chạy ứng dụng
