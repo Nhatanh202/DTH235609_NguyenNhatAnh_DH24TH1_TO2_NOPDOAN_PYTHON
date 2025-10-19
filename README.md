@@ -37,7 +37,7 @@ Trong thời đại công nghệ thông tin phát triển mạnh mẽ, việc qu
 
 | Thành phần | Công nghệ |
 |-------------|------------|
-| Ngôn ngữ lập trình | **Python** |
+| Ngôn ngữ lập trình | **Python 3.x** |
 | Giao diện người dùng | **Tkinter** |
 | Cơ sở dữ liệu | **MySQL** |
 | Thư viện hỗ trợ | `mysql-connector-python`, `tkcalendar`, `pillow` |
