@@ -79,4 +79,4 @@ python main.py
 ```
  ---
  
-Cảm ơn bạn đã xem qua đồ án!
+Cảm ơn Thầy/Cô đã xem qua đồ án!
