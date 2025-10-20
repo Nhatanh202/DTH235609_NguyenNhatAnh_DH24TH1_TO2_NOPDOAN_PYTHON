@@ -41,7 +41,7 @@
 ## 📦 CẤU TRÚC THƯ MỤC
 
 Cấu trúc dự án được tổ chức theo mô hình module, giúp dễ dàng quản lý và bảo trì code: 
-'''bash
+```bash
 
 QuanLyXeMay/
 ├── main.py                  # 🚀 File chính chạy ứng dụng & Xử lý giao diện Tkinter
