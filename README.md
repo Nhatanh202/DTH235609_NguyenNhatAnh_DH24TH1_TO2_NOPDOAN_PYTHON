@@ -60,10 +60,23 @@ QuanLyXeMay/
 │
 ├── README.md                # Mô tả dự án (File này)
 └── requirements.txt         # Danh sách thư viện cần cài đặt
+```
+---
+## 🧩 HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY ỨNG DỤNG
+* Bước 1: Tạo cơ sở dữ liệu
 
+Mở MySQL Workbench hoặc Terminal, chạy file database/setup.sql.
 
+* Bước 2: Cài đặt thư viện
+pip install -r requirements.txt
 
+* Bước 3: Chạy ứng dụng
+python main.py
 
+* Bước 4: Giao diện minh họa
 
+(Chèn hình nếu có)
+
+![Giao diện chính](assets/gui_main.png)
 
 Cảm ơn bạn đã xem qua đồ án!
