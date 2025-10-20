@@ -64,17 +64,19 @@ QuanLyXeMay/
 ---
 ## 🧩 HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY ỨNG DỤNG
 * Bước 1: Tạo cơ sở dữ liệu
-
-Mở MySQL Workbench hoặc Terminal, chạy file database/setup.sql.
-
+    Mở MySQL Workbench hoặc Terminal, chạy file database/setup.sql.
 * Bước 2: Cài đặt thư viện
-```pip install -r requirements.txt```
-
+```bash
+pip install -r requirements.txt
+```
 * Bước 3: Chạy ứng dụng
-```python main.py```
-
+```bash
+python main.py
+```
 * Bước 4: Giao diện minh họa (Chèn hình nếu có)
-
-```![Giao diện chính](assets/gui_main.png)```
-
+```bash
+![Giao diện chính](assets/gui_main.png)
+```
+ ---
+ 
 Cảm ơn bạn đã xem qua đồ án!
