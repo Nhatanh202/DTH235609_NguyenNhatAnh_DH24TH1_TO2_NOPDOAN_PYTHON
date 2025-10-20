@@ -1,4 +1,4 @@
-# 🏍️ QUẢN LÝ XE MÁY (Motorbike Management System)
+# 🏍️ QUẢN LÝ CỬA HÀNG XE MÁY
 
 > Đồ án Chuyên đề Python (COS525) - Trường Đại học An Giang
 
