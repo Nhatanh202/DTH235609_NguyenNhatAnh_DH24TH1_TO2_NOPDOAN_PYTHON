@@ -68,15 +68,13 @@ QuanLyXeMay/
 Mở MySQL Workbench hoặc Terminal, chạy file database/setup.sql.
 
 * Bước 2: Cài đặt thư viện
-pip install -r requirements.txt
+```pip install -r requirements.txt```
 
 * Bước 3: Chạy ứng dụng
-python main.py
+```python main.py```
 
-* Bước 4: Giao diện minh họa
+* Bước 4: Giao diện minh họa (Chèn hình nếu có)
 
-(Chèn hình nếu có)
-
-![Giao diện chính](assets/gui_main.png)
+```![Giao diện chính](assets/gui_main.png)```
 
 Cảm ơn bạn đã xem qua đồ án!
