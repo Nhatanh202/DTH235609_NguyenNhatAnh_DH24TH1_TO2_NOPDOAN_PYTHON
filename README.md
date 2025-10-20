@@ -41,19 +41,24 @@
 ## 📦 CẤU TRÚC THƯ MỤC
 
 Cấu trúc dự án được tổ chức theo mô hình module, giúp dễ dàng quản lý và bảo trì code: 
-QuanLyXeMay /
+QuanLyXeMay/
 ├── main.py                  # 🚀 File chính chạy ứng dụng & Xử lý giao diện Tkinter
+│
 ├── database/
 │   ├── connect.py           # Thiết lập kết nối CSDL (MySQL)
 │   └── setup.sql            # Script SQL tạo DB & Bảng
+│
 ├── modules/
 │   ├── crud.py              # Các logic nghiệp vụ: Thêm, Sửa, Xóa, Tìm kiếm
 │   └── utils.py             # Hàm tiện ích (Validate, Format,...)
+│
 ├── assets/
 │   ├── icons/               # Icon, hình ảnh giao diện
 │   └── logo.png
+│
 ├── README.md                # Mô tả dự án (File này)
 └── requirements.txt         # Danh sách thư viện cần cài đặt
+
 
 
 
