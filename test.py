@@ -15,10 +15,14 @@ def connect():
         print("❌ Lỗi khi kết nối:", e)
         return None
 
+
+# --- Thử chạy ---
 conn = connect()
+
 if conn:
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sys.databases")
+    cursor.execute("SELECT name FROM sys.databases")  # Lấy danh sách database trên SQL Server
+    print("\n📋 Danh sách database trên SQL Server:")
     for row in cursor:
-        print(row)
+        print(" -", row[0])
     conn.close()
