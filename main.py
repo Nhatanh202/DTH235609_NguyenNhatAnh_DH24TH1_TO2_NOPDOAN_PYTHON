@@ -1,37 +1,73 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+# from tkcalendar import DateEntry # Thêm nếu cần
 
+# --- Khai báo các hàm xử lý Menu (Command Handlers) ---
+# Tạm thời, các hàm này chỉ in ra thông báo, sau này bạn sẽ thay thế bằng code gọi các Form quản lý.
+def show_form_hanghoa():
+    messagebox.showinfo("Chức năng", "Mở Form Quản lý Xe Máy (Hàng hóa)")
+    # Ở đây, bạn sẽ chuyển đổi/hiển thị Frame chứa nội dung Quản lý Xe Máy
 
+def show_form_nhanvien():
+    messagebox.showinfo("Chức năng", "Mở Form Quản lý Nhân Viên")
 
-def center_window(win, w=900, h=600):
-    # Hàm căn giữa cửa sổ
-    ws = win.winfo_screenwidth()
-    hs = win.winfo_screenheight()
-    x = (ws // 2) - (w // 2)
-    y = (hs // 2) - (h // 2)
-    win.geometry(f'{w}x{h}+{x}+{y}')
+def show_form_khachhang():
+    messagebox.showinfo("Chức năng", "Mở Form Quản lý Khách Hàng")
 
+# ... (Thêm các hàm cho các mục menu khác: Báo cáo, Trợ giúp, v.v.)
+
+# ====== CỬA SỔ CHÍNH ======
 root = tk.Tk()
-root.title("QUẢN LÝ CỬA HÀNG XE MÁY")
-center_window(root)
-root.resizable(False, False)
+root.title("Chương trình Quản lý Cửa Hàng Xe Máy")
+# (Thêm center_window() và resizable(False, False) nếu cần)
 
-tk.Label(root, text="HỆ THỐNG QUẢN LÝ CỬA HÀNG XE MÁY", font=("Arial", 20, "bold"), fg="red").pack(pady=10)
+# -----------------------------------------------------------
+# --- 1. TẠO THANH MENU CHÍNH (MENU BAR) ---
+# -----------------------------------------------------------
+menubar = tk.Menu(root)
+root.config(menu=menubar) # Gán Menu Bar vào cửa sổ chính
 
-notebook = ttk.Notebook(root)
-notebook.pack(pady=5, padx=10, expand=True, fill="both")
+# -----------------------------------------------------------
+# --- 2. TẠO CÁC MENU CẤP 1 (Tập tin, Danh mục, Hóa đơn...) ---
+# -----------------------------------------------------------
 
-# Khai báo các Frame (Tab)
-frame_xemay = ttk.Frame(notebook)
-frame_nhanvien = ttk.Frame(notebook)
-frame_khachhang = ttk.Frame(notebook)
-frame_hoadon = ttk.Frame(notebook)
+# === 2a. Menu 'Tập tin' ===
+file_menu = tk.Menu(menubar, tearoff=0)
+menubar.add_cascade(label="Tập tin", menu=file_menu)
+file_menu.add_command(label="Đóng", command=root.quit) # Ví dụ: Thoát ứng dụng
 
-# Thêm các Frame vào Notebook
-notebook.add(frame_xemay, text='Quản lý Xe Máy')
-notebook.add(frame_nhanvien, text='Quản lý Nhân Viên')
-notebook.add(frame_khachhang, text='Quản lý Khách Hàng')
-notebook.add(frame_hoadon, text='Quản lý Hóa Đơn')
+# === 2b. Menu 'Danh mục' (Chứa các Form Quản lý CRUD) ===
+danhmuc_menu = tk.Menu(menubar, tearoff=0)
+menubar.add_cascade(label="Danh mục", menu=danhmuc_menu)
+
+# Menu con cho Danh mục (Mô phỏng 4 Form của bạn)
+# Chú ý: Xe Máy tương đương với Hàng hoá trong mẫu
+danhmuc_menu.add_command(label="Xe Máy (Hàng hoá)", command=show_form_hanghoa) 
+danhmuc_menu.add_command(label="Nhân viên", command=show_form_nhanvien)
+danhmuc_menu.add_command(label="Khách hàng", command=show_form_khachhang)
+danhmuc_menu.add_separator() # Đường kẻ phân cách
+danhmuc_menu.add_command(label="Chất liệu/Loại xe", command=lambda: print("Mở Form Chất liệu"))
 
 
-root.mainloop()
+# === 2c. Menu 'Hoá đơn' ===
+hoadon_menu = tk.Menu(menubar, tearoff=0)
+menubar.add_cascade(label="Hóa đơn", menu=hoadon_menu)
+hoadon_menu.add_command(label="Lập hóa đơn", command=lambda: print("Lập HĐ"))
+hoadon_menu.add_command(label="Xem danh sách HĐ", command=lambda: print("Xem HĐ"))
+
+# -----------------------------------------------------------
+# --- 3. KHU VỰC CHÍNH (FRAME CHỨA NỘI DUNG CÁC FORM) ---
+# -----------------------------------------------------------
+# Do bạn không dùng hệ thống Tab Notebook nữa, bạn cần một Frame chính để hiển thị nội dung.
+
+main_frame = tk.Frame(root)
+main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+# Ví dụ: Hiển thị nội dung chào mừng ban đầu
+tk.Label(main_frame, text="CHƯƠNG TRÌNH QUẢN LÝ CỬA HÀNG XE MÁY", 
+         font=("Arial", 20), fg="#336699").pack(pady=50)
+
+
+# ====== CHẠY VÒNG LẶP CHÍNH ======
+if __name__ == "__main__":
+    root.mainloop()

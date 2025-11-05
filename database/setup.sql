@@ -36,4 +36,19 @@ CREATE TABLE HoaDon (
         CONSTRAINT FK_HoaDon_KhachHang FOREIGN KEY (MaKH) REFERENCES KhachHang(MaKH),
         CONSTRAINT FK_HoaDon_XeMay FOREIGN KEY (MaXe) REFERENCES XeMay(MaXe)
     );
-SELECT * FROM HoaDon
+CREATE TABLE ChiTietHoaDon(
+    [MaHD]      VARCHAR(10) NOT NULL,
+    [MaXe]      VARCHAR(10) NOT NULL,
+
+    -- Thông tin giao dịch
+    SoLuong INT         NOT NULL,
+    ThanhTien DECIMAL(14, 2) NOT NULL,
+	GiaBan DECIMAL(12, 0),
+    -- Khóa chính kép (Composite Primary Key)
+    PRIMARY KEY (MaHD, MaXe),
+
+    -- Định nghĩa Khóa ngoại
+    CONSTRAINT FK_ChiTietHD_HoaDon FOREIGN KEY (MaHD) REFERENCES HoaDon(MaHD),
+    CONSTRAINT FK_ChiTietHD_XeMay FOREIGN KEY (MaXe) REFERENCES XeMay(MaXe)
+);
+SELECT * FROM ChiTietHoaDon
