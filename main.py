@@ -270,7 +270,7 @@ danhmuc_menu.add_command(label="Khách hàng", command=show_form_khachhang)
 # === 2c. Menu 'Hoá đơn' ===
 hoadon_menu = tk.Menu(menubar, tearoff=0)
 menubar.add_cascade(label="Hóa đơn", menu=hoadon_menu)
-hoadon_menu.add_command(label="Lập hóa đơn", command=lambda: messagebox.showinfo("Chức năng", "Lập Hóa Đơn"))
+hoadon_menu.add_command(label="Chi tiết hóa đơn", command=lambda: messagebox.showinfo("Chức năng", "Chi Tiết Hóa Đơn"))
 hoadon_menu.add_command(label="Xem danh sách HĐ", command=lambda: messagebox.showinfo("Chức năng", "Xem Danh Sách Hóa Đơn"))
 
 # -----------------------------------------------------------
@@ -285,4 +285,4 @@ tk.Label(main_frame, text="CHƯƠNG TRÌNH QUẢN LÝ CỬA HÀNG XE MÁY",
 
 # ====== CHẠY VÒNG LẶP CHÍNH ======
 if __name__ == "__main__":
-    root.mainloop()
+    root.mainloop() 
