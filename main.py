@@ -2,6 +2,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 # from tkcalendar import DateEntry # Cần uncomment nếu muốn dùng DateEntry
 
+# Import các module CRUD để tải dữ liệu từ SQL Server
+from modules.crud import khachhang_crud, nhanvien_crud, xemay_crud
+
 # --- Khai báo các biến toàn cục cho Nhân Viên ---
 gender_var = None
 chucvu_values = ["Quản lý", "Nhân viên", "Kế toán", "Bảo vệ"]
@@ -9,6 +12,26 @@ chucvu_values = ["Quản lý", "Nhân viên", "Kế toán", "Bảo vệ"]
 # =======================================================
 # --- HÀM TIỆN ÍCH ---
 # =======================================================
+def populate_treeview(tree, data_loader):
+    """Xóa dữ liệu cũ trong Treeview và chèn dữ liệu mới từ data_loader.
+
+    Args:
+        tree: ttk.Treeview widget
+        data_loader: hàm trả về list of pyodbc.Row (ví dụ: khachhang_crud.load_all_data)
+    """
+    # Xóa tất cả dữ liệu cũ
+    for item in tree.get_children():
+        tree.delete(item)
+    
+    # Tải dữ liệu mới từ SQL Server
+    rows = data_loader()
+    
+    # Chèn từng hàng vào Treeview
+    for row in rows:
+        # Chuyển pyodbc.Row thành tuple để chèn vào Treeview
+        values = tuple(row)
+        tree.insert("", tk.END, values=values)
+
 def clear_main_frame():
     """Xóa tất cả các widget con trong main_frame."""
     for widget in main_frame.winfo_children():
@@ -101,6 +124,9 @@ def create_nhanvien_frame():
 
     tree.pack(padx=10, pady=5, fill="both", expand=True)
 
+    # Tải dữ liệu từ SQL Server và điền vào Treeview
+    populate_treeview(tree, nhanvien_crud.load_all_data)
+
 ### 2. FORM QUẢN LÝ XE MÁY 
 def create_xemay_frame():
     clear_main_frame()
@@ -171,6 +197,9 @@ def create_xemay_frame():
     tree.heading("sokhung", text="Số Khung"); tree.column("sokhung", width=120, anchor="center")
 
     tree.pack(padx=10, pady=5, fill="both", expand=True)   
+
+    # Tải dữ liệu từ SQL Server và điền vào Treeview
+    populate_treeview(tree, xemay_crud.load_all_data)   
    
 ### 3. FORM QUẢN LÝ KHÁCH HÀNG
 def create_khachhang_frame():
@@ -220,6 +249,9 @@ def create_khachhang_frame():
     tree.heading("diachi", text="Địa Chỉ"); tree.column("diachi", width=350, anchor="w")
 
     tree.pack(padx=10, pady=5, fill="both", expand=True)
+
+    # Tải dữ liệu từ SQL Server và điền vào Treeview
+    populate_treeview(tree, khachhang_crud.load_all_data)
 
 # =======================================================
 # --- HÀM XỬ LÝ MENU (COMMAND HANDLERS) ---

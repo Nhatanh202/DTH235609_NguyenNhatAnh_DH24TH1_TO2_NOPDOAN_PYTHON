@@ -51,4 +51,11 @@ CREATE TABLE ChiTietHoaDon(
     CONSTRAINT FK_ChiTietHD_HoaDon FOREIGN KEY (MaHD) REFERENCES HoaDon(MaHD),
     CONSTRAINT FK_ChiTietHD_XeMay FOREIGN KEY (MaXe) REFERENCES XeMay(MaXe)
 );
-SELECT * FROM ChiTietHoaDon
+
+ALTER TABLE NhanVien
+ADD 
+    HoLot NVARCHAR(50),  -- Họ và tên đệm (có thể NULL)
+    Phai NVARCHAR(5),    -- Giới tính (ví dụ: 'Nam', 'Nữ')
+    NgaySinh DATE;       -- Ngày tháng năm sinh
+
+SELECT * FROM NhanVien
