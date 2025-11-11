@@ -11,7 +11,7 @@ def load_all_data():
         try:
             cursor = conn.cursor()
             # Lệnh SELECT lấy tất cả dữ liệu
-            cursor.execute(f"SELECT MaXe, TenXe, LoaiXe, HangXe, GiaNhap, NgayNhap, SoKhung, TinhTrang FROM {TABLE_NAME}")
+            cursor.execute(f"SELECT MaXe, TenXe, LoaiXe, HangXe, MauSac, GiaNhap, GiaBan, SoKhung, TinhTrang FROM {TABLE_NAME}")
             results = cursor.fetchall()
             return results
         except pyodbc.Error as err:

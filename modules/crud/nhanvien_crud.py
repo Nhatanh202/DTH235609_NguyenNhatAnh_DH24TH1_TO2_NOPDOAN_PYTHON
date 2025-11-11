@@ -30,19 +30,72 @@ def load_all_data():
 
 
 def get_by_id(manv):
-	"""Return a single row for given MaNV or None if not found/error."""
-	conn = connect()
-	if conn:
-		try:
-			cursor = conn.cursor()
-			sql = f"SELECT * FROM {TABLE_NAME} WHERE MaNV = ?"
-			cursor.execute(sql, manv)
-			row = cursor.fetchone()
-			return row
-		except pyodbc.Error as err:
-			print(f"Lỗi truy vấn get_by_id (NhanVien): {err}")
-			return None
-		finally:
-			conn.close()
-	return None
+    """Return a single row for given MaNV or None if not found/error."""
+    conn = connect()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            sql = f"SELECT * FROM {TABLE_NAME} WHERE MaNV = ?"
+            cursor.execute(sql, manv)
+            row = cursor.fetchone()
+            return row
+        except pyodbc.Error as err:
+            print(f"Lỗi truy vấn get_by_id (NhanVien): {err}")
+            return None
+        finally:
+            conn.close()
+    return None
 
+
+def them_moi_nhanvien(manv, holot, ten, phai, ngaysinh, chucvu):
+    """Thêm mới nhân viên."""
+    conn = connect()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            sql = f"INSERT INTO {TABLE_NAME} (MaNV, HoLot, Ten, Phai, NgaySinh, ChucVu) VALUES (?, ?, ?, ?, ?, ?)"
+            cursor.execute(sql, manv, holot, ten, phai, ngaysinh, chucvu)
+            conn.commit()
+            return True
+        except pyodbc.Error as err:
+            print(f"Lỗi thêm nhân viên: {err}")
+            return False
+        finally:
+            conn.close()
+    return False
+
+
+def cap_nhat_nhanvien(manv, holot, ten, phai, ngaysinh, chucvu):
+    """Cập nhật thông tin nhân viên."""
+    conn = connect()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            sql = f"UPDATE {TABLE_NAME} SET HoLot=?, Ten=?, Phai=?, NgaySinh=?, ChucVu=? WHERE MaNV=?"
+            cursor.execute(sql, holot, ten, phai, ngaysinh, chucvu, manv)
+            conn.commit()
+            return True
+        except pyodbc.Error as err:
+            print(f"Lỗi cập nhật nhân viên: {err}")
+            return False
+        finally:
+            conn.close()
+    return False
+
+
+def xoa_nhanvien(manv):
+    """Xóa nhân viên."""
+    conn = connect()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            sql = f"DELETE FROM {TABLE_NAME} WHERE MaNV=?"
+            cursor.execute(sql, manv)
+            conn.commit()
+            return True
+        except pyodbc.Error as err:
+            print(f"Lỗi xóa nhân viên: {err}")
+            return False
+        finally:
+            conn.close()
+    return False

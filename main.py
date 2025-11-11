@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox
 # from tkcalendar import DateEntry # Cần uncomment nếu muốn dùng DateEntry
 
 # Import các module CRUD để tải dữ liệu từ SQL Server
-from modules.crud import khachhang_crud, nhanvien_crud, xemay_crud
+from modules.crud import khachhang_crud, nhanvien_crud, xemay_crud, hoadon_crud, chitiethoadon_crud
 
 # --- Khai báo các biến toàn cục cho Nhân Viên ---
 gender_var = None
@@ -183,7 +183,7 @@ def create_xemay_frame():
     lbl_ds = tk.Label(main_frame, text="Danh sách xe máy", font=("Arial", 15, "bold"))
     lbl_ds.pack(pady=5, anchor="w", padx=10) 
 
-    columns = ("maxe", "tenxe", "loaixe", "hangxe", "mausac", "gianhap", "giaban", "sokhung")
+    columns = ("maxe", "tenxe", "loaixe", "hangxe", "mausac", "gianhap", "giaban", "sokhung", "tinhtrang")
     tree = ttk.Treeview(main_frame, columns=columns, show="headings", height=10)
 
     # Định nghĩa tiêu đề cột và độ rộng
@@ -195,6 +195,7 @@ def create_xemay_frame():
     tree.heading("gianhap", text="Giá Nhập"); tree.column("gianhap", width=100, anchor="e")
     tree.heading("giaban", text="Giá Bán"); tree.column("giaban", width=100, anchor="e")
     tree.heading("sokhung", text="Số Khung"); tree.column("sokhung", width=120, anchor="center")
+    tree.heading("tinhtrang", text="Tình Trạng"); tree.column("tinhtrang", width=100, anchor="center")
 
     tree.pack(padx=10, pady=5, fill="both", expand=True)   
 
@@ -253,6 +254,148 @@ def create_khachhang_frame():
     # Tải dữ liệu từ SQL Server và điền vào Treeview
     populate_treeview(tree, khachhang_crud.load_all_data)
 
+### 4. FORM QUẢN LÝ HÓA ĐƠN
+def create_hoadon_frame():
+    clear_main_frame()
+    
+    # Tiêu đề chính
+    lbl_title = tk.Label(main_frame, text="QUẢN LÝ HÓA ĐƠN", 
+                         font=("Arial", 18, "bold"), fg="#336699")
+    lbl_title.pack(pady=10)
+    
+    # ####### FRAME NHẬP THÔNG TIN HÓA ĐƠN #######
+    frame_info = tk.Frame(main_frame, padx=10, pady=5, relief=tk.GROOVE, borderwidth=1)
+    frame_info.pack(fill="x", padx=10, pady=10)
+
+    # Dòng 0: Mã HD | Mã KH | Mã NV
+    tk.Label(frame_info, text="Mã HD").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+    entry_mahd = tk.Entry(frame_info, width=15)
+    entry_mahd.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+    tk.Label(frame_info, text="Mã KH").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+    entry_makh_hd = tk.Entry(frame_info, width=15)
+    entry_makh_hd.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+
+    tk.Label(frame_info, text="Mã NV").grid(row=0, column=4, padx=5, pady=5, sticky="w")
+    entry_manv_hd = tk.Entry(frame_info, width=15)
+    entry_manv_hd.grid(row=0, column=5, padx=5, pady=5, sticky="w")
+
+    # Dòng 1: Ngày Lập | Tổng Tiền
+    tk.Label(frame_info, text="Ngày Lập").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    entry_ngaylap = tk.Entry(frame_info, width=15)
+    entry_ngaylap.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+    
+    tk.Label(frame_info, text="Tổng Tiền").grid(row=1, column=2, padx=5, pady=5, sticky="w")
+    entry_tongtien = tk.Entry(frame_info, width=15)
+    entry_tongtien.grid(row=1, column=3, padx=5, pady=5, sticky="w")
+
+    # ####### FRAME NÚT ĐIỀU KHIỂN #######
+    create_control_buttons(main_frame)
+
+    # ####### BẢNG DANH SÁCH HÓA ĐƠN (Treeview) #######
+    lbl_ds = tk.Label(main_frame, text="Danh sách hóa đơn", font=("Arial", 15, "bold"))
+    lbl_ds.pack(pady=5, anchor="w", padx=10) 
+
+    columns = ("mahd", "makh", "manv", "ngaylap", "tongtien")
+    tree = ttk.Treeview(main_frame, columns=columns, show="headings", height=10)
+
+    # Định nghĩa tiêu đề cột và độ rộng
+    tree.heading("mahd", text="Mã HD"); tree.column("mahd", width=80, anchor="center")
+    tree.heading("makh", text="Mã KH"); tree.column("makh", width=80, anchor="center")
+    tree.heading("manv", text="Mã NV"); tree.column("manv", width=80, anchor="center")
+    tree.heading("ngaylap", text="Ngày Lập"); tree.column("ngaylap", width=100, anchor="center")
+    tree.heading("tongtien", text="Tổng Tiền"); tree.column("tongtien", width=120, anchor="e")
+
+    tree.pack(padx=10, pady=5, fill="both", expand=True)
+
+    # Tải dữ liệu từ SQL Server và điền vào Treeview
+    populate_treeview(tree, hoadon_crud.load_all_data)
+
+### 5. FORM QUẢN LÝ CHI TIẾT HÓA ĐƠN
+def create_chitiethoadon_frame():
+    clear_main_frame()
+    
+    # Tiêu đề chính
+    lbl_title = tk.Label(main_frame, text="QUẢN LÝ CHI TIẾT HÓA ĐƠN", 
+                         font=("Arial", 18, "bold"), fg="#336699")
+    lbl_title.pack(pady=10)
+    
+    # Tải dữ liệu xe máy để tạo danh sách mã xe và map giá bán
+    xemay_data = xemay_crud.load_all_data()
+    maxe_list = [row[0] for row in xemay_data]  # MaXe
+    maxe_to_giaban = {row[0]: row[6] for row in xemay_data}  # GiaBan (index 6)
+    
+    # Hàm tính thành tiền
+    def tinh_thanh_tien(*args):
+        try:
+            soluong = int(entry_soluong.get() or 0)
+            dongia = float(entry_dongia.get() or 0)
+            thanhtien = soluong * dongia
+            entry_thanhtien.delete(0, tk.END)
+            entry_thanhtien.insert(0, str(thanhtien))
+        except ValueError:
+            entry_thanhtien.delete(0, tk.END)
+    
+    # Hàm xử lý khi chọn mã xe
+    def on_maxe_select(event):
+        selected_maxe = cbb_maxe_ct.get()
+        if selected_maxe in maxe_to_giaban:
+            giaban = maxe_to_giaban[selected_maxe]
+            entry_dongia.delete(0, tk.END)
+            entry_dongia.insert(0, str(giaban))
+            tinh_thanh_tien()  # Tính lại thành tiền
+    
+    # ####### FRAME NHẬP THÔNG TIN CHI TIẾT HÓA ĐƠN #######
+    frame_info = tk.Frame(main_frame, padx=10, pady=5, relief=tk.GROOVE, borderwidth=1)
+    frame_info.pack(fill="x", padx=10, pady=10)
+
+    # Dòng 0: Mã HD | Mã Xe | Số Lượng
+    tk.Label(frame_info, text="Mã HD").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+    entry_mahd_ct = tk.Entry(frame_info, width=15)
+    entry_mahd_ct.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+    tk.Label(frame_info, text="Mã Xe").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+    cbb_maxe_ct = ttk.Combobox(frame_info, values=maxe_list, width=12)
+    cbb_maxe_ct.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+    cbb_maxe_ct.bind("<<ComboboxSelected>>", on_maxe_select)
+
+    tk.Label(frame_info, text="Số Lượng").grid(row=0, column=4, padx=5, pady=5, sticky="w")
+    entry_soluong = tk.Entry(frame_info, width=15)
+    entry_soluong.grid(row=0, column=5, padx=5, pady=5, sticky="w")
+    entry_soluong.bind("<KeyRelease>", tinh_thanh_tien)
+
+    # Dòng 1: Đơn Giá | Thành Tiền
+    tk.Label(frame_info, text="Đơn Giá").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    entry_dongia = tk.Entry(frame_info, width=15)
+    entry_dongia.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+    entry_dongia.bind("<KeyRelease>", tinh_thanh_tien)
+    
+    tk.Label(frame_info, text="Thành Tiền").grid(row=1, column=2, padx=5, pady=5, sticky="w")
+    entry_thanhtien = tk.Entry(frame_info, width=15, state="readonly")  # Readonly vì tính tự động
+    entry_thanhtien.grid(row=1, column=3, padx=5, pady=5, sticky="w")
+
+    # ####### FRAME NÚT ĐIỀU KHIỂN #######
+    create_control_buttons(main_frame)
+
+    # ####### BẢNG DANH SÁCH CHI TIẾT HÓA ĐƠN (Treeview) #######
+    lbl_ds = tk.Label(main_frame, text="Danh sách chi tiết hóa đơn", font=("Arial", 15, "bold"))
+    lbl_ds.pack(pady=5, anchor="w", padx=10) 
+
+    columns = ("mahd", "maxe", "soluong", "dongia", "thanhtien")
+    tree = ttk.Treeview(main_frame, columns=columns, show="headings", height=10)
+
+    # Định nghĩa tiêu đề cột và độ rộng
+    tree.heading("mahd", text="Mã HD"); tree.column("mahd", width=80, anchor="center")
+    tree.heading("maxe", text="Mã Xe"); tree.column("maxe", width=80, anchor="center")
+    tree.heading("soluong", text="Số Lượng"); tree.column("soluong", width=80, anchor="center")
+    tree.heading("dongia", text="Đơn Giá"); tree.column("dongia", width=100, anchor="e")
+    tree.heading("thanhtien", text="Thành Tiền"); tree.column("thanhtien", width=120, anchor="e")
+
+    tree.pack(padx=10, pady=5, fill="both", expand=True)
+
+    # Tải dữ liệu từ SQL Server và điền vào Treeview
+    populate_treeview(tree, chitiethoadon_crud.load_all_data)
+
 # =======================================================
 # --- HÀM XỬ LÝ MENU (COMMAND HANDLERS) ---
 # =======================================================
@@ -264,6 +407,12 @@ def show_form_nhanvien():
 
 def show_form_khachhang():
     create_khachhang_frame()
+
+def show_form_hoadon():
+    create_hoadon_frame()
+
+def show_form_chitiethoadon():
+    create_chitiethoadon_frame()
 
 def show_form_chatlieu():
     clear_main_frame()
@@ -302,8 +451,8 @@ danhmuc_menu.add_command(label="Khách hàng", command=show_form_khachhang)
 # === 2c. Menu 'Hoá đơn' ===
 hoadon_menu = tk.Menu(menubar, tearoff=0)
 menubar.add_cascade(label="Hóa đơn", menu=hoadon_menu)
-hoadon_menu.add_command(label="Chi tiết hóa đơn", command=lambda: messagebox.showinfo("Chức năng", "Chi Tiết Hóa Đơn"))
-hoadon_menu.add_command(label="Xem danh sách HĐ", command=lambda: messagebox.showinfo("Chức năng", "Xem Danh Sách Hóa Đơn"))
+hoadon_menu.add_command(label="Chi tiết hóa đơn", command=show_form_chitiethoadon)
+hoadon_menu.add_command(label="Xem danh sách HĐ", command=show_form_hoadon)
 
 # -----------------------------------------------------------
 # --- 3. KHU VỰC CHÍNH (FRAME CHỨA NỘI DUNG CÁC FORM) ---
