@@ -42,15 +42,14 @@ def check_login(username, password):
             return True
         return False
     except Exception as e:
-        from tkinter import messagebox
-        messagebox.showerror("Lỗi", f"Lỗi kiểm tra đăng nhập: {e}")
+        # Log error instead of showing GUI message in auth module
+        print(f"Lỗi kiểm tra đăng nhập: {e}")
         return False
     finally:
         try:
             conn.close()
         except Exception:
             pass
-
 
 def update_admin_password(current_pass, new_pass):
     """Cập nhật mật khẩu admin: if TaiKhoan table exists update it else write .admin_pass"""

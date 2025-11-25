@@ -4,39 +4,11 @@ from modules.auth import check_login
 from modules.data import load_data
 from modules.calendar import CalendarDatePicker
 from modules.crud import execute_write, insert_record, update_record, delete_record, search_records, get_quantity, insert_hoa_don, generate_mahd
-
-# Theme colors for a motorcycle shop look
-PRIMARY = "#105d3b"
-ACCENT = "#436007"
-BG = '#f4f7fa'
-PANEL = '#ffffff'
-TEXT = "#000000"
-
-
-class ToolTip:
-    def __init__(self, widget, text):
-        self.widget = widget
-        self.text = text
-        self.tooltip = None
-        widget.bind("<Enter>", self.show_tooltip)
-        widget.bind("<Leave>", self.hide_tooltip)
-
-    def show_tooltip(self, event):
-        if self.tooltip:
-            return
-        x, y, _, _ = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + 25
-        y += self.widget.winfo_rooty() + 25
-        self.tooltip = tk.Toplevel(self.widget)
-        self.tooltip.wm_overrideredirect(True)
-        self.tooltip.wm_geometry(f"+{x}+{y}")
-        label = tk.Label(self.tooltip, text=self.text, background="yellow", relief="solid", borderwidth=1)
-        label.pack()
-
-    def hide_tooltip(self, event):
-        if self.tooltip:
-            self.tooltip.destroy()
-            self.tooltip = None
+from modules.constants import MAU_CHINH, MAU_PHU, MAU_NEN, MAU_BANG, MAU_CHU, TABLE_CONFIGS
+from modules.tooltip import CongCuGoiY
+from modules.login import tao_cua_so_dang_nhap
+from modules.ui_components import tao_thanh_ben, tao_form, tao_cac_nut, tao_bang
+from modules.crud_handlers import lam_moi_bang, khi_them, khi_sua, khi_xoa, khi_tim_kiem, validate_data, check_exists
 
 
 class App:
@@ -48,7 +20,7 @@ class App:
 
         # apply theme to root
         try:
-            self.root.configure(bg=BG)
+            self.root.configure(bg=MAU_NEN)
         except Exception:
             pass
 
@@ -60,29 +32,29 @@ class App:
             pass
         # Treeview styling with striped rows
         try:
-            self.style.configure('Treeview', background=PANEL, fieldbackground=PANEL, foreground=TEXT)
-            self.style.configure('Treeview.Heading', background=PRIMARY, foreground='white', font=('Segoe UI', 10, 'bold'))
-            self.style.map('Treeview', background=[('selected', PRIMARY)])
-            self.style.configure('evenrow', background=PANEL)
+            self.style.configure('Treeview', background=MAU_BANG, fieldbackground=MAU_BANG, foreground=MAU_CHU)
+            self.style.configure('Treeview.Heading', background=MAU_CHINH, foreground='white', font=('Segoe UI', 10, 'bold'))
+            self.style.map('Treeview', background=[('selected', MAU_CHINH)])
+            self.style.configure('evenrow', background=MAU_BANG)
             self.style.configure('oddrow', background='#f5f5f5')
         except Exception:
             pass
         # Primary button style
         try:
-            self.style.configure('Primary.TButton', background=PRIMARY, foreground='white')
-            self.style.map('Primary.TButton', background=[('active', ACCENT)])
+            self.style.configure('Primary.TButton', background=MAU_CHINH, foreground='white')
+            self.style.map('Primary.TButton', background=[('active', MAU_PHU)])
         except Exception:
             pass
         # Toolbar button style
         try:
-            self.style.configure('Toolbar.TButton', background=PRIMARY, foreground='white', font=('Segoe UI', 9))
-            self.style.map('Toolbar.TButton', background=[('active', ACCENT)])
+            self.style.configure('Toolbar.TButton', background=MAU_CHINH, foreground='white', font=('Segoe UI', 9))
+            self.style.map('Toolbar.TButton', background=[('active', MAU_PHU)])
         except Exception:
             pass
         # LabelFrame style for group box
         try:
-            self.style.configure('TLabelFrame', background=PANEL, borderwidth=1, relief='flat')
-            self.style.configure('TLabelFrame.Label', background=PANEL, foreground=PRIMARY, font=('Segoe UI', 10, 'bold'))
+            self.style.configure('TLabelFrame', background=MAU_BANG, borderwidth=1, relief='flat')
+            self.style.configure('TLabelFrame.Label', background=MAU_BANG, foreground=MAU_CHINH, font=('Segoe UI', 10, 'bold'))
         except Exception:
             pass
 
@@ -90,76 +62,33 @@ class App:
         self.current_user = None
         self.is_admin = False
 
-        # frames: toolbar on top and content below
-        self.toolbar_frame = tk.Frame(self.root, height=56, bg=BG)
-        self.toolbar_frame.pack(side=tk.TOP, fill=tk.X)
-        self.content_frame = tk.Frame(self.root, bg=BG)
-        self.content_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-        # status bar
-        self.status_var = tk.StringVar()
-        status = tk.Label(self.root, textvariable=self.status_var, bd=1, relief=tk.SUNKEN, anchor=tk.W, bg=PRIMARY, fg='white')
-        status.pack(side=tk.BOTTOM, fill=tk.X)
+        # frames: sidebar on left and content on right
+        self.khung_thanh_ben = tk.Frame(self.root, width=180, bg=MAU_CHINH)
+        self.khung_thanh_ben.pack(side=tk.LEFT, fill=tk.Y)
+        self.khung_thanh_ben.pack_propagate(False)  # Keep width
+        self.content_frame = tk.Frame(self.root, bg=MAU_NEN)
+        self.content_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # table configs
-        self.table_configs = {
-            'NhanVien': {
-                'cols': ('MaNV', 'HoLot', 'TenNV', 'Phai', 'NgaySinh', 'ChucVu'),
-                'heads': ('Mã NV', 'Họ lót', 'Tên', 'Phái', 'Ngày sinh', 'Chức vụ')
-            },
-            'KhachHang': {
-                'cols': ('MaKH', 'TenKH', 'SDT', 'DiaChi'),
-                'heads': ('Mã KH', 'Tên KH', 'SĐT', 'Địa chỉ')
-            },
-            'XeMay': {
-                'cols': ('MaXe', 'TenXe', 'LoaiXe', 'HangXe', 'GiaNhap', 'GiaBan', 'SoLuong'),
-                'heads': ('Mã xe', 'Tên xe', 'Loại xe', 'Hãng xe', 'Giá nhập', 'Giá bán', 'Số lượng')
-            },
-            'HoaDon': {
-                'cols': ('MaHD', 'NgayLap', 'MaNV', 'MaKH', 'MaXe', 'SoLuong', 'GiaBan', 'TongThanhTien'),
-                'heads': ('Mã HD', 'Ngày lập', 'Mã NV', 'Mã KH', 'Mã xe', 'SL', 'Giá bán', 'Tổng tiền')
-            }
-        }
+        self.table_configs = TABLE_CONFIGS
 
-        self._build_toolbar()
-        self._build_menu()
+        self._build_sidebar()
         self.show_home()
 
     def _build_tabs(self):
         tabs = [
-            ('👤 Nhân Viên', 'NhanVien'),
-            ('🛒 Khách Hàng', 'KhachHang'),
-            ('🏍️ Xe Máy', 'XeMay'),
-            ('📄 Hóa Đơn', 'HoaDon')
+            ('Nhân Viên', 'NhanVien'),
+            ('Khách Hàng', 'KhachHang'),
+            ('Xe Máy', 'XeMay'),
+            (' Hóa Đơn', 'HoaDon')
         ]
         for text, name in tabs:
-            frame = tk.Frame(self.notebook, bg=BG)
+            frame = tk.Frame(self.notebook, bg=MAU_NEN)
             self.tab_frames[name] = frame
             self.notebook.add(frame, text=text)
 
-    def _build_menu(self):
-        menubar = tk.Menu(self.root)
-        account_menu = tk.Menu(menubar, tearoff=0)
-        account_menu.add_command(label='Đổi mật khẩu', command=self.show_change_password)
-        account_menu.add_command(label='Đăng xuất', command=self.logout)
-        menubar.add_cascade(label='Tài khoản', menu=account_menu)
-        file_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label='Thoát', command=self.root.quit)
-
-        self.root.config(menu=menubar)
-
-    def _build_toolbar(self):
-        buttons = [
-            ('🏠 Trang Chủ', self.show_home, 'Về trang chủ'),
-            ('👤 Nhân Viên', self.show_nhanvien, 'Quản lý nhân viên'),
-            ('🛒 Khách Hàng', self.show_khachhang, 'Quản lý khách hàng'),
-            ('🏍️ Xe Máy', self.show_xemay, 'Quản lý xe máy'),
-            ('📄 Hóa Đơn', self.show_hoadon, 'Quản lý hóa đơn')
-        ]
-        for text, cmd, tip in buttons:
-            btn = ttk.Button(self.toolbar_frame, text=text, command=cmd, style='Toolbar.TButton')
-            btn.pack(side=tk.LEFT, padx=2)
-            ToolTip(btn, tip)
+    def _build_sidebar(self):
+        tao_thanh_ben(self)
 
     def clear_content(self, parent=None):
         if parent is None:
@@ -167,16 +96,14 @@ class App:
         for w in parent.winfo_children():
             w.destroy()
 
-    def set_status(self, text=''):
-        user = self.current_user or 'Chưa đăng nhập'
-        self.status_var.set(f'Người dùng: {user}    |    {text}')
-
     def show_home(self):
         self.clear_content()
         tk.Label(self.content_frame, text='CHÀO MỪNG ĐẾN VỚI HỆ THỐNG QUẢN LÝ CỬA HÀNG XE MÁY',
-                 font=('Arial', 18, 'bold'), bg=BG, fg=PRIMARY).pack(pady=40)
-        tk.Label(self.content_frame, text='Sử dụng menu trên để chuyển giữa các danh sách', font=('Arial', 12), bg=BG, fg=TEXT).pack()
-        self.set_status('Trang chủ')
+                 font=('Arial', 18, 'bold'), bg=MAU_NEN, fg=MAU_CHINH).pack(pady=40)
+        tk.Label(self.content_frame, text='Sử dụng thanh bên để chuyển giữa các danh sách', font=('Arial', 12), bg=MAU_NEN, fg=MAU_CHU).pack()
+
+    def hien_thi_trang_chu(self):
+        self.show_home()
 
     def create_table_frame(self, table_name, columns, headings):
         self.clear_content()
@@ -193,7 +120,7 @@ class App:
             xm_options = [f"{row[0]} - {row[1]} - {row[5]}" for row in load_data('XeMay')]
 
         # panel for form and buttons
-        panel = tk.Frame(self.content_frame, bg=PANEL, bd=1, relief='flat')
+        panel = tk.Frame(self.content_frame, bg=MAU_BANG, bd=1, relief='flat')
         panel.pack(fill=tk.X, padx=10, pady=(4, 10))
 
         self._create_form(panel, table_name, columns, headings, nv_options, kh_options, xm_options)
@@ -201,11 +128,11 @@ class App:
         self._create_tree(table_name, columns, headings, display_name)
 
     def _create_form(self, panel, table_name, columns, headings, nv_options, kh_options, xm_options):
-        form = tk.Frame(panel, bg=PANEL)
+        form = tk.Frame(panel, bg=MAU_BANG)
         form.pack(fill=tk.X, pady=(10, 6), padx=10)
         self.form_entries = {}
         for i, col in enumerate(columns):
-            lbl = tk.Label(form, text=headings[i], bg=PANEL, fg=TEXT)
+            lbl = tk.Label(form, text=headings[i], bg=MAU_BANG, fg=MAU_CHU)
             lbl.grid(row=0, column=i, padx=8, pady=2, sticky='w')
             ent = self._create_widget(form, table_name, col, nv_options, kh_options, xm_options, i)
             self.form_entries[col] = ent
@@ -236,43 +163,43 @@ class App:
             ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
             ent.bind('<<ComboboxSelected>>', lambda e: self._on_select_xm())
         elif table_name == 'HoaDon' and col == 'SoLuong':
-            ent = tk.Entry(form, bg='white', fg=TEXT)
+            ent = tk.Entry(form, bg='white', fg=MAU_CHU)
             ent.grid(row=1, column=i, padx=8, pady=2, sticky='we')
             ent.bind('<KeyRelease>', lambda e: self._calculate_total())
         elif table_name == 'HoaDon' and col == 'MaHD':
             ent = ttk.Entry(form, state='readonly')
             ent.grid(row=1, column=i, padx=8, pady=2, sticky='we')
         else:
-            ent = tk.Entry(form, bg='white', fg=TEXT)
+            ent = tk.Entry(form, bg='white', fg=MAU_CHU)
             ent.grid(row=1, column=i, padx=8, pady=2, sticky='we')
         return ent
 
     def _create_buttons(self, panel, table_name, columns):
         ttk.Separator(panel, orient='horizontal').pack(fill=tk.X, padx=10, pady=(0, 4))
-        btn_frame = tk.Frame(panel, bg=PANEL)
+        btn_frame = tk.Frame(panel, bg=MAU_BANG)
         btn_frame.pack(fill=tk.X, pady=(4, 10), padx=10)
         btn_add = ttk.Button(btn_frame, text='Thêm', width=10, style='Primary.TButton', command=lambda: self._on_add(table_name, columns))
         btn_add.pack(side=tk.LEFT, padx=6)
-        ToolTip(btn_add, 'Thêm bản ghi mới')
+        CongCuGoiY(btn_add, 'Thêm bản ghi mới')
         btn_edit = ttk.Button(btn_frame, text='Sửa', width=10, style='Primary.TButton', command=lambda: self._on_edit(table_name, columns))
         btn_edit.pack(side=tk.LEFT, padx=6)
-        ToolTip(btn_edit, 'Cập nhật bản ghi đã chọn')
+        CongCuGoiY(btn_edit, 'Cập nhật bản ghi đã chọn')
         btn_delete = ttk.Button(btn_frame, text='Xóa', width=10, style='Primary.TButton', command=lambda: self._on_delete(table_name, columns))
         btn_delete.pack(side=tk.LEFT, padx=6)
-        ToolTip(btn_delete, 'Xóa bản ghi đã chọn')
-        tk.Label(btn_frame, text='Tìm kiếm:', bg=PANEL, fg=TEXT).pack(side=tk.LEFT, padx=(20,4))
+        CongCuGoiY(btn_delete, 'Xóa bản ghi đã chọn')
+        tk.Label(btn_frame, text='Tìm kiếm:', bg=MAU_BANG, fg=MAU_CHU).pack(side=tk.LEFT, padx=(20,4))
         search_ent = ttk.Entry(btn_frame)
         search_ent.pack(side=tk.LEFT, padx=4)
         btn_search = ttk.Button(btn_frame, text='Tìm', width=8, command=lambda: self._on_search(table_name, columns, search_ent.get().strip()))
         btn_search.pack(side=tk.LEFT, padx=6)
-        ToolTip(btn_search, 'Tìm kiếm bản ghi')
+        CongCuGoiY(btn_search, 'Tìm kiếm bản ghi')
         btn_refresh = ttk.Button(btn_frame, text='Tải lại', width=8, command=lambda: self._refresh_table(table_name, columns))
         btn_refresh.pack(side=tk.RIGHT, padx=6)
-        ToolTip(btn_refresh, 'Tải lại dữ liệu')
+        CongCuGoiY(btn_refresh, 'Tải lại dữ liệu')
 
     def _create_tree(self, table_name, columns, headings, display_name):
         ttk.Separator(self.content_frame, orient='horizontal').pack(fill=tk.X, padx=10, pady=(10, 4))
-        tk.Label(self.content_frame, text=f'Danh sách {display_name}', font=('Arial', 16, 'bold'), bg=BG, fg=PRIMARY).pack(pady=(10, 4))
+        tk.Label(self.content_frame, text=f'Danh sách {display_name}', font=('Arial', 16, 'bold'), bg=MAU_NEN, fg=MAU_CHINH).pack(pady=(10, 4))
         frame = tk.Frame(self.content_frame)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(4, 10))
         tree = ttk.Treeview(frame, columns=columns, show='headings', height=15)
@@ -288,7 +215,7 @@ class App:
         self.current_tree = tree
         self._refresh_table(table_name, columns)
         tree.bind('<<TreeviewSelect>>', lambda e: self._populate_form(tree.item(tree.selection()[0], 'values') if tree.selection() else ()))
-        self.set_status(f'Xem: {table_name}')
+        # self.set_status(f'Xem: {table_name}')
 
     def _on_select_xm(self):
         selected = self.form_entries['MaXe'].get()
@@ -357,11 +284,7 @@ class App:
     def show_hoadon(self):
         self.show_table('HoaDon')
 
-    def logout(self):
-        self.current_user = None
-        self.is_admin = False
-        # show login again
-        self.root.withdraw()
+    def show_login(self):
         create_login_window(self)
 
     def show_change_password(self):
@@ -381,20 +304,20 @@ class App:
         dlg.transient(self.root)
         dlg.grab_set()
         try:
-            dlg.configure(bg=BG)
+            dlg.configure(bg=MAU_NEN)
         except Exception:
             pass
 
-        tk.Label(dlg, text='Mật khẩu hiện tại:', bg=BG, fg=TEXT).pack(pady=(12,4))
-        cur_entry = tk.Entry(dlg, show='*', bg='white', fg=TEXT)
+        tk.Label(dlg, text='Mật khẩu hiện tại:', bg=MAU_NEN, fg=MAU_CHU).pack(pady=(12,4))
+        cur_entry = tk.Entry(dlg, show='*', bg='white', fg=MAU_CHU)
         cur_entry.pack(padx=20)
 
-        tk.Label(dlg, text='Mật khẩu mới:', bg=BG, fg=TEXT).pack(pady=(8,4))
-        new_entry = tk.Entry(dlg, show='*', bg='white', fg=TEXT)
+        tk.Label(dlg, text='Mật khẩu mới:', bg=MAU_NEN, fg=MAU_CHU).pack(pady=(8,4))
+        new_entry = tk.Entry(dlg, show='*', bg='white', fg=MAU_CHU)
         new_entry.pack(padx=20)
 
-        tk.Label(dlg, text='Nhập lại mật khẩu mới:', bg=BG, fg=TEXT).pack(pady=(8,4))
-        confirm_entry = tk.Entry(dlg, show='*', bg='white', fg=TEXT)
+        tk.Label(dlg, text='Nhập lại mật khẩu mới:', bg=MAU_NEN, fg=MAU_CHU).pack(pady=(8,4))
+        confirm_entry = tk.Entry(dlg, show='*', bg='white', fg=MAU_CHU)
         confirm_entry.pack(padx=20)
 
         def do_change():
@@ -423,169 +346,39 @@ class App:
             else:
                 messagebox.showerror('Lỗi', msg)
 
-        btn_frame = tk.Frame(dlg, bg=BG)
+        btn_frame = tk.Frame(dlg, bg=MAU_NEN)
         btn_frame.pack(pady=12)
         ttk.Button(btn_frame, text='Đổi mật khẩu', command=do_change, width=14, style='Primary.TButton').grid(row=0, column=0, padx=6)
         ttk.Button(btn_frame, text='Hủy', command=lambda: (dlg.grab_release(), dlg.destroy()), width=8).grid(row=0, column=1, padx=6)
 
+    def logout(self):
+        """Đăng xuất người dùng hiện tại và hiển thị màn hình đăng nhập."""
+        if messagebox.askyesno("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?"):
+            self.current_user = None
+            self.is_admin = False
+            self.root.withdraw()
+            # Hủy các widget con để tránh lỗi
+            for widget in self.content_frame.winfo_children():
+                widget.destroy()
+            for widget in self.khung_thanh_ben.winfo_children():
+                widget.destroy()
+            tao_cua_so_dang_nhap(self.root)
+
     # ----------------- CRUD button handlers -----------------
     def _refresh_table(self, table_name, columns):
-        self.set_status('Đang tải dữ liệu...')
-        # clear tree
-        tree = getattr(self, 'current_tree', None)
-        if tree is None:
-            return
-        for r in tree.get_children():
-            tree.delete(r)
-        data = load_data(table_name)
-        for idx, row in enumerate(data):
-            tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
-            tree.insert('', tk.END, values=row, tags=(tag,))
-        self.set_status('Sẵn sàng')
+        lam_moi_bang(self, table_name, columns)
 
     def _on_add(self, table_name, columns):
-        self.set_status('Đang thêm bản ghi...')
-        vals = self.get_form_values(columns)
-        if table_name == 'HoaDon':
-            vals[0] = generate_mahd()  # Luôn generate MaHD mới
-            # Set back to form
-            mahd_ent = self.form_entries.get('MaHD')
-            if mahd_ent:
-                mahd_ent.config(state='normal')
-                mahd_ent.delete(0, tk.END)
-                mahd_ent.insert(0, vals[0])
-                mahd_ent.config(state='readonly')
-        elif not vals[0]:
-            # allow user to enter primary key; if empty warn
-            messagebox.showwarning('Lỗi', 'Mã (khóa chính) không được để trống')
-            self.set_status('Sẵn sàng')
-            return
-        # Validate data
-        if not self._validate_data(table_name, columns, vals):
-            self.set_status('Sẵn sàng')
-            return
-        data = dict(zip(columns, vals))
-        if table_name == 'HoaDon':
-            ok = insert_hoa_don(data)
-            if ok:
-                self._refresh_table(table_name, columns)
-                # Also refresh XeMay table if visible
-                if hasattr(self, 'current_table') and self.current_table == 'XeMay':
-                    xemay_columns = self.table_configs['XeMay']['cols']
-                    self._refresh_table('XeMay', xemay_columns)
-            else:
-                messagebox.showerror('Lỗi', 'Không thể thêm hóa đơn. Lỗi cơ sở dữ liệu.')
-        else:
-            ok = insert_record(table_name, data)
-            if ok:
-                messagebox.showinfo('Thành công', f'Đã thêm {table_name} thành công!')
-                self._refresh_table(table_name, columns)
-            else:
-                messagebox.showerror('Lỗi', f'Không thể thêm {table_name}. Lỗi cơ sở dữ liệu.')
-        self.set_status('Sẵn sàng')
+        khi_them(self, table_name, columns)
 
     def _on_edit(self, table_name, columns):
-        self.set_status('Đang cập nhật...')
-        vals = self.get_form_values(columns)
-        if not vals[0]:
-            messagebox.showwarning('Lỗi', 'Chọn hoặc nhập Mã để sửa')
-            self.set_status('Sẵn sàng')
-            return
-        # Validate data (skip primary key)
-        if not self._validate_data(table_name, columns[1:], vals[1:]):
-            self.set_status('Sẵn sàng')
-            return
-        data = dict(zip(columns[1:], vals[1:]))
-        where_clause = f"{columns[0]} = ?"
-        where_params = (vals[0],)
-        ok = update_record(table_name, data, where_clause, where_params)
-        if ok:
-            messagebox.showinfo('Thành công', f'Đã cập nhật {table_name} thành công!')
-            self._refresh_table(table_name, columns)
-        else:
-            messagebox.showerror('Lỗi', f'Không thể cập nhật {table_name}. Lỗi cơ sở dữ liệu.')
-        self.set_status('Sẵn sàng')
+        khi_sua(self, table_name, columns)
 
     def _on_delete(self, table_name, columns):
-        self.set_status('Đang xóa...')
-        pk = columns[0]
-        pkval = self.form_entries[pk].get().strip()
-        if not pkval:
-            messagebox.showwarning('Lỗi', 'Chọn hoặc nhập Mã để xóa')
-            self.set_status('Sẵn sàng')
-            return
-        if not messagebox.askyesno('Xác nhận', f'Bạn có chắc muốn xóa {pkval}?'):
-            self.set_status('Sẵn sàng')
-            return
-        where_clause = f"{pk} = ?"
-        where_params = (pkval,)
-        ok = delete_record(table_name, where_clause, where_params)
-        if ok:
-            messagebox.showinfo('Thành công', f'Đã xóa {table_name} thành công!')
-            self._refresh_table(table_name, columns)
-        else:
-            messagebox.showerror('Lỗi', f'Không thể xóa {table_name}. Lỗi cơ sở dữ liệu.')
-        self.set_status('Sẵn sàng')
+        khi_xoa(self, table_name, columns)
 
     def _on_search(self, table_name, columns, term):
-        tree = getattr(self, 'current_tree', None)
-        if tree is None:
-            return
-        for r in tree.get_children():
-            tree.delete(r)
-        if not term:
-            self._refresh_table(table_name, columns)
-            return
-        rows = search_records(table_name, columns, term)
-        for row in rows:
-            tree.insert('', tk.END, values=row)
-
-    def _validate_data(self, table_name, columns, vals):
-        """Validate input data before insert/update"""
-        for i, col in enumerate(columns):
-            val = vals[i]
-            if table_name == 'HoaDon' and col == 'MaHD':
-                continue  # MaHD is auto-generated
-            if not val:
-                messagebox.showwarning('Lỗi', f'{col} không được để trống')
-                return False
-            if col in ['GiaNhap', 'GiaBan']:
-                if not val.isdigit() or int(val) <= 0:
-                    messagebox.showwarning('Lỗi', f'{col} phải là số dương')
-                    return False
-            elif col == 'SoLuong':
-                if not val.isdigit() or int(val) < 0:
-                    messagebox.showwarning('Lỗi', f'{col} phải là số không âm')
-                    return False
-            elif col in ['SDT']:
-                if val and not val.isdigit():
-                    messagebox.showwarning('Lỗi', f'{col} phải là số')
-                    return False
-            # Check foreign keys for HoaDon
-            if table_name == 'HoaDon':
-                if col == 'MaNV':
-                    if not self._check_exists('NhanVien', 'MaNV', val):
-                        messagebox.showwarning('Lỗi', f'Mã nhân viên {val} không tồn tại')
-                        return False
-                elif col == 'MaKH':
-                    if not self._check_exists('KhachHang', 'MaKH', val):
-                        messagebox.showwarning('Lỗi', f'Mã khách hàng {val} không tồn tại')
-                        return False
-                elif col == 'MaXe':
-                    if not self._check_exists('XeMay', 'MaXe', val):
-                        messagebox.showwarning('Lỗi', f'Mã xe {val} không tồn tại')
-                        return False
-            # Add more validations as needed
-        return True
-
-    def _check_exists(self, table, column, value):
-        """Check if value exists in table.column"""
-        from modules.data import load_data
-        data = load_data(table)
-        for row in data:
-            if str(row[0]) == str(value):  # Assuming first column is key
-                return True
-        return False
+        khi_tim_kiem(self, table_name, columns, term)
 
     def _calculate_total(self):
         """Calculate TongThanhTien = GiaBan * SoLuong for HoaDon"""
@@ -614,9 +407,9 @@ def create_login_window(app_or_root):
         root = app_or_root
 
     login_win = tk.Toplevel(root)
-    login_win.title('Đăng nhập')
+    login_win.title('Đăng nhập - Quản lý Cửa hàng Xe Máy')
     login_win.resizable(False, False)
-    w, h = 360, 220
+    w, h = 400, 450
     sw = login_win.winfo_screenwidth()
     sh = login_win.winfo_screenheight()
     x = (sw - w) // 2
@@ -630,7 +423,6 @@ def create_login_window(app_or_root):
         pass
     try:
         if root.state() != 'normal':
-            # don't set transient when root is withdrawn
             pass
         else:
             login_win.transient(root)
@@ -638,13 +430,71 @@ def create_login_window(app_or_root):
         pass
     login_win.grab_set()
 
-    tk.Label(login_win, text='Tên đăng nhập:').pack(pady=(15,5))
-    username_entry = tk.Entry(login_win)
-    username_entry.pack(padx=20)
+    login_win.configure(bg=MAU_NEN)
 
-    tk.Label(login_win, text='Mật khẩu:').pack(pady=(10,5))
-    password_entry = tk.Entry(login_win, show='*')
-    password_entry.pack(padx=20)
+    # Main container
+    main = tk.Frame(login_win, bg=MAU_NEN)
+    main.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    # Card container with shadow effect
+    card = tk.Frame(main, bg=MAU_BANG, bd=0, relief='flat')
+    card.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    # Header section
+    header = tk.Frame(card, bg=MAU_CHINH, height=60)
+    header.pack(fill=tk.X)
+    header.pack_propagate(False)
+    title_frame = tk.Frame(header, bg=MAU_CHINH)
+    title_frame.pack(padx=15, pady=15)
+    tk.Label(title_frame, text='QUẢN LÝ CỬA HÀNG XE MÁY', bg=MAU_CHINH, fg='white', font=('Segoe UI', 12, 'bold')).pack(anchor='w')
+    # Form section
+    form = tk.Frame(card, bg=MAU_BANG)
+    form.pack(fill=tk.BOTH, expand=True, padx=25, pady=25)
+
+    # Welcome text
+    tk.Label(form, text='Chào mừng bạn!', bg=MAU_BANG, fg=MAU_CHU, font=('Segoe UI', 18, 'bold')).pack(pady=(10,2))
+    tk.Label(form, text='Vui lòng đăng nhập để tiếp tục', bg=MAU_BANG, fg='#666666', font=('Segoe UI', 11)).pack(pady=(0,15))
+
+    # Username field
+    user_frame = tk.Frame(form, bg=MAU_BANG)
+    user_frame.pack(fill=tk.X, pady=(0,12))
+
+    user_icon = tk.Label(user_frame, text='👤', bg=MAU_BANG, fg=MAU_CHU, font=('Segoe UI', 14))
+    user_icon.pack(side=tk.LEFT, padx=(0,10))
+
+    user_container = tk.Frame(user_frame, bg=MAU_BANG)
+    user_container.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+    tk.Label(user_container, text='Tên đăng nhập', bg=MAU_BANG, fg=MAU_CHU, font=('Segoe UI', 10, 'bold')).pack(anchor='w', pady=(0,3))
+
+    username_entry = tk.Entry(user_container, bg='white', fg=MAU_CHU, font=('Segoe UI', 12), relief='flat', bd=1, highlightthickness=1, highlightcolor=MAU_CHINH)
+    username_entry.pack(fill=tk.X, ipady=6)
+
+    # Password field
+    pass_frame = tk.Frame(form, bg=MAU_BANG)
+    pass_frame.pack(fill=tk.X, pady=(0,15))
+
+    pass_icon = tk.Label(pass_frame, text='🔒', bg=MAU_BANG, fg=MAU_CHU, font=('Segoe UI', 14))
+    pass_icon.pack(side=tk.LEFT, padx=(0,10))
+
+    pass_container = tk.Frame(pass_frame, bg=MAU_BANG)
+    pass_container.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+    tk.Label(pass_container, text='Mật khẩu', bg=MAU_BANG, fg=MAU_CHU, font=('Segoe UI', 10, 'bold')).pack(anchor='w', pady=(0,3))
+
+    password_entry = tk.Entry(pass_container, show='*', bg='white', fg=MAU_CHU, font=('Segoe UI', 12), relief='flat', bd=1, highlightthickness=1, highlightcolor=MAU_CHINH)
+    password_entry.pack(fill=tk.X, ipady=6)
+
+    # Remember me and forgot password
+    options_frame = tk.Frame(form, bg=MAU_BANG)
+    options_frame.pack(fill=tk.X, pady=(0,12))
+
+    remember_var = tk.IntVar()
+    remember_check = tk.Checkbutton(options_frame, text='Ghi nhớ đăng nhập', variable=remember_var, bg=MAU_BANG, fg=MAU_CHU, font=('Segoe UI', 10))
+    remember_check.pack(side=tk.LEFT)
+
+    forgot_label = tk.Label(options_frame, text='Quên mật khẩu?', fg=MAU_CHINH, bg=MAU_BANG, cursor='hand2', font=('Segoe UI', 10, 'underline'))
+    forgot_label.pack(side=tk.RIGHT)
 
     def do_cancel():
         try:
@@ -663,7 +513,7 @@ def create_login_window(app_or_root):
             if app:
                 app.current_user = username
                 app.is_admin = (username.lower() == 'admin')
-                app.set_status('Đã đăng nhập')
+                # app.set_status('Đã đăng nhập')
                 try:
                     login_win.grab_release()
                 except Exception:
@@ -671,12 +521,11 @@ def create_login_window(app_or_root):
                 login_win.destroy()
                 root.deiconify()
             else:
-                # create app now
                 root.deiconify()
                 app_new = App(root)
                 app_new.current_user = username
                 app_new.is_admin = (username.lower() == 'admin')
-                app_new.set_status('Đã đăng nhập')
+                # app_new.set_status('Đã đăng nhập')
                 try:
                     login_win.grab_release()
                 except Exception:
@@ -685,10 +534,16 @@ def create_login_window(app_or_root):
         else:
             messagebox.showerror('Lỗi', 'Sai tên đăng nhập hoặc mật khẩu!')
 
-    btn_frame = tk.Frame(login_win)
-    btn_frame.pack(pady=15)
-    ttk.Button(btn_frame, text='Đăng nhập', width=12, command=do_login, style='Primary.TButton').grid(row=0, column=0, padx=6)
-    ttk.Button(btn_frame, text='Thoát', width=8, command=do_cancel).grid(row=0, column=1, padx=6)
+    # Login button
+    login_btn = tk.Button(form, text='Đăng nhập', bg=MAU_CHINH, fg='white', font=('Segoe UI', 14, 'bold'), relief='flat', bd=0, command=do_login, padx=30, pady=10)
+    login_btn.pack(pady=(8,12))
+
+    # Hover effect for button
+    login_btn.bind("<Enter>", lambda e: login_btn.config(bg=MAU_PHU))
+    login_btn.bind("<Leave>", lambda e: login_btn.config(bg=MAU_CHINH))
+
+    # Footer
+    tk.Label(form, text='© 2025 - Hệ thống quản lý cửa hàng xe máy', bg=MAU_BANG, fg='#999999', font=('Segoe UI', 9)).pack(side=tk.BOTTOM, pady=(10,0))
 
     login_win.bind('<Return>', lambda e: do_login())
     login_win.bind('<Escape>', lambda e: do_cancel())

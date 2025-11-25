@@ -25,7 +25,7 @@ class CalendarDatePicker:
         
         # Combobox năm
         current_year = datetime.now().year
-        years = [str(y) for y in range(current_year - 10, current_year + 11)]
+        years = [str(y) for y in range(current_year - 50, current_year + 11)]
         self.year_cb = tk.ttk.Combobox(self.frame, textvariable=self.year_var, values=years, state='readonly', width=5)
         self.year_cb.pack(side=tk.LEFT, padx=1)
         self.year_cb.bind('<<ComboboxSelected>>', self.update_date)

@@ -93,32 +93,73 @@ def generate_mahd():
         conn.close()
 
 def insert_hoa_don(data):
+    """Thêm hóa đơn và cập nhật số lượng xe"""
     if 'MaHD' not in data or not data['MaHD'].strip():
         data['MaHD'] = generate_mahd()
-    
+
     maxe = data.get('MaXe', '').strip()
-    so_luong_str = data.get('SoLuong', '').strip()
-    gia_ban_str = data.get('GiaBan', '').strip()
-    tong_tien_str = data.get('TongThanhTien', '').strip()
-    if not all([maxe, so_luong_str.isdigit(), gia_ban_str.isdigit(), tong_tien_str.isdigit()]):
-        messagebox.showwarning('Lỗi', 'Dữ liệu không hợp lệ')
+    
+    # Chuyển đổi các giá trị số, mặc định là 0 nếu rỗng hoặc không hợp lệ
+    try:
+        so_luong = int(data.get('SoLuong') or 0)
+    except (ValueError, TypeError):
+        so_luong = 0
+        
+    try:
+        gia_ban = int(data.get('GiaBan') or 0)
+    except (ValueError, TypeError):
+        gia_ban = 0
+
+    # Tính toán lại tổng tiền để đảm bảo chính xác
+    tong_tien = so_luong * gia_ban
+    data['TongThanhTien'] = tong_tien
+    data['SoLuong'] = so_luong
+    data['GiaBan'] = gia_ban
+
+    if not maxe:
+        messagebox.showwarning('Lỗi', 'Mã xe không được để trống.')
         return False
-    so_luong = int(so_luong_str)
-    gia_ban = int(gia_ban_str)
-    tong_tien = int(tong_tien_str)
-    if tong_tien != gia_ban * so_luong:
-        messagebox.showwarning('Lỗi', 'Tổng tiền không khớp')
+    if so_luong <= 0:
+        messagebox.showwarning('Lỗi', 'Số lượng phải là số dương.')
         return False
-    current_qty = get_quantity('XeMay', 'MaXe', maxe)
-    if current_qty is None or current_qty < so_luong:
-        messagebox.showwarning('Lỗi', 'Không đủ tồn kho')
+
+    # Bắt đầu một transaction
+    conn = connect_db()
+    if not conn:
+        messagebox.showerror('Lỗi', 'Không thể kết nối đến cơ sở dữ liệu.')
         return False
-    data.update({'SoLuong': so_luong, 'GiaBan': gia_ban, 'TongThanhTien': tong_tien})
-    if not insert_record('HoaDon', data):
-        messagebox.showerror('Lỗi', 'Không thể thêm hóa đơn vào cơ sở dữ liệu.')
+    
+    try:
+        cur = conn.cursor()
+        # 1. Kiểm tra số lượng tồn kho
+        cur.execute("SELECT SoLuong FROM XeMay WHERE MaXe = ?", (maxe,))
+        result = cur.fetchone()
+        current_qty = result[0] if result else 0
+
+        if current_qty < so_luong:
+            messagebox.showwarning('Lỗi', f'Không đủ hàng. Tồn kho chỉ còn {current_qty}.')
+            conn.close()
+            return False
+
+        # 2. Thêm hóa đơn
+        columns = ', '.join(data.keys())
+        placeholders = ', '.join(['?'] * len(data))
+        sql_insert_hd = f'INSERT INTO HoaDon ({columns}) VALUES ({placeholders})'
+        cur.execute(sql_insert_hd, tuple(data.values()))
+
+        # 3. Cập nhật số lượng xe
+        new_qty = current_qty - so_luong
+        sql_update_xm = "UPDATE XeMay SET SoLuong = ? WHERE MaXe = ?"
+        cur.execute(sql_update_xm, (new_qty, maxe))
+
+        # Commit transaction
+        conn.commit()
+        messagebox.showinfo('Thành công', 'Đã thêm hóa đơn và cập nhật tồn kho thành công!')
+        return True
+
+    except Exception as e:
+        conn.rollback() # Rollback nếu có lỗi
+        messagebox.showerror('Lỗi Giao Dịch', f'Đã xảy ra lỗi: {e}. Giao dịch đã được hoàn tác.')
         return False
-    if not update_record('XeMay', {'SoLuong': current_qty - so_luong}, "MaXe = ?", (maxe,)):
-        messagebox.showerror('Lỗi', 'Không thể cập nhật tồn kho.')
-        return False
-    messagebox.showinfo('Thành công', 'Đã thêm hóa đơn')
-    return True
+    finally:
+        conn.close()

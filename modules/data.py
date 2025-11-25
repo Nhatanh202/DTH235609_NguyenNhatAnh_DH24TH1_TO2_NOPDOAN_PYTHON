@@ -19,8 +19,7 @@ def load_data(table_name):
         rows = cur.fetchall()
         return [tuple(r) for r in rows]
     except Exception as e:
-        from tkinter import messagebox
-        messagebox.showerror('Lỗi', f'Lỗi tải dữ liệu {table_name}: {e}')
+        print(f'Lỗi tải dữ liệu {table_name}: {e}')
         return []
     finally:
         try:
