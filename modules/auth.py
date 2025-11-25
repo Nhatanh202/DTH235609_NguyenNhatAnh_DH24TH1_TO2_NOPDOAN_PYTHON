@@ -1,5 +1,9 @@
 import os
+import hashlib
 from database.connect import connect as connect_db
+
+def hash_password(password):
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 def check_login(username, password):
     conn = connect_db()
@@ -13,7 +17,7 @@ def check_login(username, password):
                 cursor.execute("SELECT MatKhau FROM TaiKhoan WHERE TenDangNhap = ?", ('admin',))
                 r = cursor.fetchone()
                 if r:
-                    return str(r[0]) == str(password)
+                    return str(r[0]) == hash_password(password)
             except Exception:
                 pass
 
@@ -22,10 +26,10 @@ def check_login(username, password):
                 try:
                     with open(admin_file, 'r', encoding='utf-8') as f:
                         stored = f.read().strip()
-                        return stored == password
+                        return stored == hash_password(password)
                 except Exception:
                     return False
-            return password == '123'
+            return hash_password(password) == hash_password('123')
 
         # Normal employee: password is TenNV in DB; allow username as MaNV or TenNV
         cursor.execute("SELECT MaNV, TenNV FROM NhanVien WHERE MaNV = ? OR TenNV = ?", (username, username))
@@ -34,7 +38,7 @@ def check_login(username, password):
             return False
         db_manv, db_tennv = row[0], row[1]
         # Accept if password equals TenNV and username matches either MaNV or TenNV
-        if str(db_tennv) == str(password) and (str(db_manv) == str(username) or str(db_tennv) == str(username)):
+        if hash_password(db_tennv) == hash_password(password) and (str(db_manv) == str(username) or str(db_tennv) == str(username)):
             return True
         return False
     except Exception as e:
@@ -59,9 +63,9 @@ def update_admin_password(current_pass, new_pass):
                 _ = cur.fetchone()
                 # Try update else insert
                 try:
-                    cur.execute("UPDATE TaiKhoan SET MatKhau = ? WHERE TenDangNhap = ?", (new_pass, 'admin'))
+                    cur.execute("UPDATE TaiKhoan SET MatKhau = ? WHERE TenDangNhap = ?", (hash_password(new_pass), 'admin'))
                     if cur.rowcount == 0:
-                        cur.execute("INSERT INTO TaiKhoan (TenDangNhap, MatKhau) VALUES (?, ?)", ('admin', new_pass))
+                        cur.execute("INSERT INTO TaiKhoan (TenDangNhap, MatKhau) VALUES (?, ?)", ('admin', hash_password(new_pass)))
                 except Exception:
                     # fallback to file
                     conn.commit()
@@ -85,7 +89,7 @@ def update_admin_password(current_pass, new_pass):
     admin_file = os.path.join(os.path.dirname(__file__), '.admin_pass')
     try:
         with open(admin_file, 'w', encoding='utf-8') as f:
-            f.write(str(new_pass))
+            f.write(hash_password(new_pass))
         return True, 'Cập nhật mật khẩu thành công (file)'
     except Exception as e:
         return False, f'Lỗi khi lưu mật khẩu: {e}'

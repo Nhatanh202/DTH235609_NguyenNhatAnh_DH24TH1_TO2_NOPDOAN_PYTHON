@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox
 from modules.auth import check_login
 from modules.data import load_data
 from modules.calendar import CalendarDatePicker
-from modules.crud import execute_write, insert_record, update_record, delete_record, get_next_id
+from modules.crud import execute_write, insert_record, update_record, delete_record, search_records, get_quantity, insert_hoa_don, generate_mahd
 
 # Theme colors for a motorcycle shop look
 PRIMARY = "#105d3b"
@@ -11,6 +11,32 @@ ACCENT = "#436007"
 BG = '#f4f7fa'
 PANEL = '#ffffff'
 TEXT = "#000000"
+
+
+class ToolTip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip = None
+        widget.bind("<Enter>", self.show_tooltip)
+        widget.bind("<Leave>", self.hide_tooltip)
+
+    def show_tooltip(self, event):
+        if self.tooltip:
+            return
+        x, y, _, _ = self.widget.bbox("insert")
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 25
+        self.tooltip = tk.Toplevel(self.widget)
+        self.tooltip.wm_overrideredirect(True)
+        self.tooltip.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(self.tooltip, text=self.text, background="yellow", relief="solid", borderwidth=1)
+        label.pack()
+
+    def hide_tooltip(self, event):
+        if self.tooltip:
+            self.tooltip.destroy()
+            self.tooltip = None
 
 
 class App:
@@ -86,8 +112,8 @@ class App:
                 'heads': ('Mã KH', 'Tên KH', 'SĐT', 'Địa chỉ')
             },
             'XeMay': {
-                'cols': ('MaXe', 'TenXe', 'LoaiXe', 'HangXe', 'GiaBan', 'TinhTrang'),
-                'heads': ('Mã xe', 'Tên xe', 'Loại xe', 'Hãng xe', 'Giá bán', 'Tình trạng')
+                'cols': ('MaXe', 'TenXe', 'LoaiXe', 'HangXe', 'GiaNhap', 'GiaBan', 'SoLuong'),
+                'heads': ('Mã xe', 'Tên xe', 'Loại xe', 'Hãng xe', 'Giá nhập', 'Giá bán', 'Số lượng')
             },
             'HoaDon': {
                 'cols': ('MaHD', 'NgayLap', 'MaNV', 'MaKH', 'MaXe', 'SoLuong', 'GiaBan', 'TongThanhTien'),
@@ -124,14 +150,16 @@ class App:
 
     def _build_toolbar(self):
         buttons = [
-            ('🏠 Trang Chủ', self.show_home),
-            ('👤 Nhân Viên', self.show_nhanvien),
-            ('🛒 Khách Hàng', self.show_khachhang),
-            ('🏍️ Xe Máy', self.show_xemay),
-            ('📄 Hóa Đơn', self.show_hoadon)
+            ('🏠 Trang Chủ', self.show_home, 'Về trang chủ'),
+            ('👤 Nhân Viên', self.show_nhanvien, 'Quản lý nhân viên'),
+            ('🛒 Khách Hàng', self.show_khachhang, 'Quản lý khách hàng'),
+            ('🏍️ Xe Máy', self.show_xemay, 'Quản lý xe máy'),
+            ('📄 Hóa Đơn', self.show_hoadon, 'Quản lý hóa đơn')
         ]
-        for text, cmd in buttons:
-            ttk.Button(self.toolbar_frame, text=text, command=cmd, style='Toolbar.TButton').pack(side=tk.LEFT, padx=2)
+        for text, cmd, tip in buttons:
+            btn = ttk.Button(self.toolbar_frame, text=text, command=cmd, style='Toolbar.TButton')
+            btn.pack(side=tk.LEFT, padx=2)
+            ToolTip(btn, tip)
 
     def clear_content(self, parent=None):
         if parent is None:
@@ -142,50 +170,6 @@ class App:
     def set_status(self, text=''):
         user = self.current_user or 'Chưa đăng nhập'
         self.status_var.set(f'Người dùng: {user}    |    {text}')
-
-    # ----------------- DB write helpers -----------------
-    def execute_write(self, sql, params=()):
-        return execute_write(sql, params)
-
-    def insert_record(self, table_name, columns, values):
-        cols = ','.join(columns)
-        placeholders = ','.join(['?'] * len(values))
-        sql = f"INSERT INTO {table_name} ({cols}) VALUES ({placeholders})"
-        return execute_write(sql, tuple(values))
-
-    def update_record(self, table_name, columns, values):
-        # assume first column is PK
-        pk = columns[0]
-        set_cols = ','.join([f"{c} = ?" for c in columns[1:]])
-        sql = f"UPDATE {table_name} SET {set_cols} WHERE {pk} = ?"
-        params = tuple(values[1:]) + (values[0],)
-        return execute_write(sql, params)
-
-    def delete_record(self, table_name, pk_col, pk_val):
-        sql = f"DELETE FROM {table_name} WHERE {pk_col} = ?"
-        return execute_write(sql, (pk_val,))
-
-    def search_records(self, table_name, columns, term):
-        conn = connect_db()
-        if not conn:
-            return []
-        try:
-            cur = conn.cursor()
-            like = f"%{term}%"
-            where = ' OR '.join([f"CAST({c} AS NVARCHAR(MAX)) LIKE ?" for c in columns])
-            sql = f"SELECT {', '.join(columns)} FROM {table_name} WHERE {where}"
-            params = tuple([like] * len(columns))
-            cur.execute(sql, params)
-            rows = cur.fetchall()
-            return [tuple(r) for r in rows]
-        except Exception as e:
-            messagebox.showerror('Lỗi', f'Lỗi tìm kiếm: {e}')
-            return []
-        finally:
-            try:
-                conn.close()
-            except Exception:
-                pass
 
     def show_home(self):
         self.clear_content()
@@ -199,97 +183,163 @@ class App:
 
         display_name = {'KhachHang': 'Khách Hàng', 'NhanVien': 'Nhân Viên', 'XeMay': 'Xe Máy', 'HoaDon': 'Hóa Đơn'}.get(table_name, table_name)
 
+        # Load options for HoaDon comboboxes
+        nv_options = []
+        kh_options = []
+        xm_options = []
+        if table_name == 'HoaDon':
+            nv_options = [f"{row[0]} - {row[1]} {row[2]}" for row in load_data('NhanVien')]
+            kh_options = [f"{row[0]} - {row[1]}" for row in load_data('KhachHang')]
+            xm_options = [f"{row[0]} - {row[1]} - {row[5]}" for row in load_data('XeMay')]
+
         # panel for form and buttons
         panel = tk.Frame(self.content_frame, bg=PANEL, bd=1, relief='flat')
         panel.pack(fill=tk.X, padx=10, pady=(4, 10))
 
-        # form area
+        self._create_form(panel, table_name, columns, headings, nv_options, kh_options, xm_options)
+        self._create_buttons(panel, table_name, columns)
+        self._create_tree(table_name, columns, headings, display_name)
+
+    def _create_form(self, panel, table_name, columns, headings, nv_options, kh_options, xm_options):
         form = tk.Frame(panel, bg=PANEL)
         form.pack(fill=tk.X, pady=(10, 6), padx=10)
         self.form_entries = {}
         for i, col in enumerate(columns):
             lbl = tk.Label(form, text=headings[i], bg=PANEL, fg=TEXT)
             lbl.grid(row=0, column=i, padx=8, pady=2, sticky='w')
-            # special widgets for certain fields
-            if col.lower() == 'phai' or col == 'Phai':
-                ent = ttk.Combobox(form, values=['Nam', 'Nữ', 'Khác'], state='readonly', width=8)
-                ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
-            elif col.lower() == 'ngaysinh' or col == 'NgaySinh':
-                dp = CalendarDatePicker(form)
-                dp.frame.grid(row=1, column=i, padx=8, pady=2, sticky='w')
-                ent = dp
-            elif col.lower() == 'hangxe' or col == 'HangXe':
-                ent = ttk.Combobox(form, values=['Honda', 'Yamaha', 'Suzuki', 'Kymco', 'Sym', 'VinFast', 'YaDea', 'DatBike', 'Khác...'], state='readonly', width=10)
-                ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
-            elif col.lower() == 'loaixe' or col == 'LoaiXe':
-                ent = ttk.Combobox(form, values=['Xe số', 'Xe ga', 'Xe côn', 'Xe điện'], state='readonly', width=8)
-                ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
-            else:
-                ent = tk.Entry(form, bg='white', fg=TEXT)
-                ent.grid(row=1, column=i, padx=8, pady=2, sticky='we')
+            ent = self._create_widget(form, table_name, col, nv_options, kh_options, xm_options, i)
             self.form_entries[col] = ent
             form.columnconfigure(i, weight=1)
 
-        # action buttons
+    def _create_widget(self, form, table_name, col, nv_options, kh_options, xm_options, i):
+        if col.lower() == 'phai' or col == 'Phai':
+            ent = ttk.Combobox(form, values=['Nam', 'Nữ', 'Khác'], state='readonly', width=8)
+            ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
+        elif col.lower() == 'ngaysinh' or col == 'NgaySinh' or col.lower() == 'ngaylap' or col == 'NgayLap':
+            dp = CalendarDatePicker(form)
+            dp.frame.grid(row=1, column=i, padx=8, pady=2, sticky='w')
+            ent = dp
+        elif col.lower() == 'hangxe' or col == 'HangXe':
+            ent = ttk.Combobox(form, values=['Honda', 'Yamaha', 'Suzuki', 'Kymco', 'Sym', 'VinFast', 'YaDea', 'DatBike', 'Khác...'], state='readonly', width=10)
+            ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
+        elif col.lower() == 'loaixe' or col == 'LoaiXe':
+            ent = ttk.Combobox(form, values=['Xe số', 'Xe ga', 'Xe côn', 'Xe điện'], state='readonly', width=8)
+            ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
+        elif table_name == 'HoaDon' and col == 'MaNV':
+            ent = ttk.Combobox(form, values=nv_options, state='readonly', width=15)
+            ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
+        elif table_name == 'HoaDon' and col == 'MaKH':
+            ent = ttk.Combobox(form, values=kh_options, state='readonly', width=15)
+            ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
+        elif table_name == 'HoaDon' and col == 'MaXe':
+            ent = ttk.Combobox(form, values=xm_options, state='readonly', width=20)
+            ent.grid(row=1, column=i, padx=8, pady=2, sticky='w')
+            ent.bind('<<ComboboxSelected>>', lambda e: self._on_select_xm())
+        elif table_name == 'HoaDon' and col == 'SoLuong':
+            ent = tk.Entry(form, bg='white', fg=TEXT)
+            ent.grid(row=1, column=i, padx=8, pady=2, sticky='we')
+            ent.bind('<KeyRelease>', lambda e: self._calculate_total())
+        elif table_name == 'HoaDon' and col == 'MaHD':
+            ent = ttk.Entry(form, state='readonly')
+            ent.grid(row=1, column=i, padx=8, pady=2, sticky='we')
+        else:
+            ent = tk.Entry(form, bg='white', fg=TEXT)
+            ent.grid(row=1, column=i, padx=8, pady=2, sticky='we')
+        return ent
+
+    def _create_buttons(self, panel, table_name, columns):
+        ttk.Separator(panel, orient='horizontal').pack(fill=tk.X, padx=10, pady=(0, 4))
         btn_frame = tk.Frame(panel, bg=PANEL)
         btn_frame.pack(fill=tk.X, pady=(4, 10), padx=10)
-        ttk.Button(btn_frame, text='Thêm', width=10, style='Primary.TButton', command=lambda: self._on_add(table_name, columns)).pack(side=tk.LEFT, padx=6)
-        ttk.Button(btn_frame, text='Sửa', width=10, style='Primary.TButton', command=lambda: self._on_edit(table_name, columns)).pack(side=tk.LEFT, padx=6)
-        ttk.Button(btn_frame, text='Xóa', width=10, style='Primary.TButton', command=lambda: self._on_delete(table_name, columns)).pack(side=tk.LEFT, padx=6)
+        btn_add = ttk.Button(btn_frame, text='Thêm', width=10, style='Primary.TButton', command=lambda: self._on_add(table_name, columns))
+        btn_add.pack(side=tk.LEFT, padx=6)
+        ToolTip(btn_add, 'Thêm bản ghi mới')
+        btn_edit = ttk.Button(btn_frame, text='Sửa', width=10, style='Primary.TButton', command=lambda: self._on_edit(table_name, columns))
+        btn_edit.pack(side=tk.LEFT, padx=6)
+        ToolTip(btn_edit, 'Cập nhật bản ghi đã chọn')
+        btn_delete = ttk.Button(btn_frame, text='Xóa', width=10, style='Primary.TButton', command=lambda: self._on_delete(table_name, columns))
+        btn_delete.pack(side=tk.LEFT, padx=6)
+        ToolTip(btn_delete, 'Xóa bản ghi đã chọn')
         tk.Label(btn_frame, text='Tìm kiếm:', bg=PANEL, fg=TEXT).pack(side=tk.LEFT, padx=(20,4))
         search_ent = ttk.Entry(btn_frame)
         search_ent.pack(side=tk.LEFT, padx=4)
-        ttk.Button(btn_frame, text='Tìm', width=8, command=lambda: self._on_search(table_name, columns, search_ent.get().strip())).pack(side=tk.LEFT, padx=6)
-        ttk.Button(btn_frame, text='Tải lại', width=8, command=lambda: self._refresh_table(table_name, columns)).pack(side=tk.RIGHT, padx=6)
+        btn_search = ttk.Button(btn_frame, text='Tìm', width=8, command=lambda: self._on_search(table_name, columns, search_ent.get().strip()))
+        btn_search.pack(side=tk.LEFT, padx=6)
+        ToolTip(btn_search, 'Tìm kiếm bản ghi')
+        btn_refresh = ttk.Button(btn_frame, text='Tải lại', width=8, command=lambda: self._refresh_table(table_name, columns))
+        btn_refresh.pack(side=tk.RIGHT, padx=6)
+        ToolTip(btn_refresh, 'Tải lại dữ liệu')
 
-        # label for list
+    def _create_tree(self, table_name, columns, headings, display_name):
+        ttk.Separator(self.content_frame, orient='horizontal').pack(fill=tk.X, padx=10, pady=(10, 4))
         tk.Label(self.content_frame, text=f'Danh sách {display_name}', font=('Arial', 16, 'bold'), bg=BG, fg=PRIMARY).pack(pady=(10, 4))
-
-        # tree area
         frame = tk.Frame(self.content_frame)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(4, 10))
-
         tree = ttk.Treeview(frame, columns=columns, show='headings', height=15)
         for col, hd in zip(columns, headings):
             tree.heading(col, text=hd)
             tree.column(col, width=120, anchor=tk.CENTER)
-
         vsb = ttk.Scrollbar(frame, orient='vertical', command=tree.yview)
         tree.configure(yscroll=vsb.set)
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
         tree.pack(fill=tk.BOTH, expand=True)
-
-        # store refs for handlers
         self.current_table = table_name
         self.current_columns = columns
         self.current_tree = tree
-
-        # populate
         self._refresh_table(table_name, columns)
-
-        # bind selection
-        def on_select(e):
-            sel = tree.selection()
-            if not sel:
-                return
-            vals = tree.item(sel[0], 'values')
-            self._populate_form(vals)
-
-        tree.bind('<<TreeviewSelect>>', on_select)
-
+        tree.bind('<<TreeviewSelect>>', lambda e: self._populate_form(tree.item(tree.selection()[0], 'values') if tree.selection() else ()))
         self.set_status(f'Xem: {table_name}')
 
-    def _populate_form(self, values):
+    def _on_select_xm(self):
+        selected = self.form_entries['MaXe'].get()
+        if selected and ' - ' in selected:
+            parts = selected.split(' - ')
+            if len(parts) >= 3:
+                gia_ban = parts[2]
+                gia_ent = self.form_entries.get('GiaBan')
+                if gia_ent:
+                    gia_ent.delete(0, tk.END)
+                    gia_ent.insert(0, gia_ban)
+                    self._calculate_total()
+
+    def _populate_form(self, vals):
+        """Populate form with selected row values"""
         for i, col in enumerate(self.current_columns):
+            if i >= len(vals):
+                continue
+            val = vals[i]
             ent = self.form_entries.get(col)
             if ent is None:
                 continue
-            val = values[i]
-            if hasattr(ent, 'set'):
+            if hasattr(ent, 'set'):  # Combobox or CalendarDatePicker
                 ent.set(val)
-            else:
+            elif hasattr(ent, 'config') and ent.cget('state') == 'readonly':  # Readonly Entry
+                ent.config(state='normal')
                 ent.delete(0, tk.END)
                 ent.insert(0, val)
+                ent.config(state='readonly')
+            else:  # Entry
+                ent.delete(0, tk.END)
+                ent.insert(0, val)
+
+    def get_form_values(self, columns):
+        vals = []
+        for col in columns:
+            ent = self.form_entries.get(col)
+            if ent is None:
+                vals.append('')
+                continue
+            if hasattr(ent, 'get'):
+                raw = ent.get()
+                if col in ['MaNV', 'MaKH', 'MaXe'] and ' - ' in raw:
+                    val = raw.split(' - ')[0]
+                else:
+                    val = raw.strip()
+            else:
+                # For CalendarDatePicker
+                val = ent.get().strip()
+            vals.append(val)
+        return vals
 
     def show_table(self, name):
         config = self.table_configs[name]
@@ -380,6 +430,7 @@ class App:
 
     # ----------------- CRUD button handlers -----------------
     def _refresh_table(self, table_name, columns):
+        self.set_status('Đang tải dữ liệu...')
         # clear tree
         tree = getattr(self, 'current_tree', None)
         if tree is None:
@@ -390,40 +441,91 @@ class App:
         for idx, row in enumerate(data):
             tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
             tree.insert('', tk.END, values=row, tags=(tag,))
+        self.set_status('Sẵn sàng')
 
     def _on_add(self, table_name, columns):
-        vals = [self.form_entries[c].get().strip() for c in columns]
-        if not vals[0]:
+        self.set_status('Đang thêm bản ghi...')
+        vals = self.get_form_values(columns)
+        if table_name == 'HoaDon':
+            vals[0] = generate_mahd()  # Luôn generate MaHD mới
+            # Set back to form
+            mahd_ent = self.form_entries.get('MaHD')
+            if mahd_ent:
+                mahd_ent.config(state='normal')
+                mahd_ent.delete(0, tk.END)
+                mahd_ent.insert(0, vals[0])
+                mahd_ent.config(state='readonly')
+        elif not vals[0]:
             # allow user to enter primary key; if empty warn
             messagebox.showwarning('Lỗi', 'Mã (khóa chính) không được để trống')
+            self.set_status('Sẵn sàng')
             return
-        ok = self.insert_record(table_name, columns, vals)
-        if ok:
-            messagebox.showinfo('Thành công', 'Đã thêm bản ghi')
-            self._refresh_table(table_name, columns)
+        # Validate data
+        if not self._validate_data(table_name, columns, vals):
+            self.set_status('Sẵn sàng')
+            return
+        data = dict(zip(columns, vals))
+        if table_name == 'HoaDon':
+            ok = insert_hoa_don(data)
+            if ok:
+                self._refresh_table(table_name, columns)
+                # Also refresh XeMay table if visible
+                if hasattr(self, 'current_table') and self.current_table == 'XeMay':
+                    xemay_columns = self.table_configs['XeMay']['cols']
+                    self._refresh_table('XeMay', xemay_columns)
+            else:
+                messagebox.showerror('Lỗi', 'Không thể thêm hóa đơn. Lỗi cơ sở dữ liệu.')
+        else:
+            ok = insert_record(table_name, data)
+            if ok:
+                messagebox.showinfo('Thành công', f'Đã thêm {table_name} thành công!')
+                self._refresh_table(table_name, columns)
+            else:
+                messagebox.showerror('Lỗi', f'Không thể thêm {table_name}. Lỗi cơ sở dữ liệu.')
+        self.set_status('Sẵn sàng')
 
     def _on_edit(self, table_name, columns):
-        vals = [self.form_entries[c].get().strip() for c in columns]
+        self.set_status('Đang cập nhật...')
+        vals = self.get_form_values(columns)
         if not vals[0]:
             messagebox.showwarning('Lỗi', 'Chọn hoặc nhập Mã để sửa')
+            self.set_status('Sẵn sàng')
             return
-        ok = self.update_record(table_name, columns, vals)
+        # Validate data (skip primary key)
+        if not self._validate_data(table_name, columns[1:], vals[1:]):
+            self.set_status('Sẵn sàng')
+            return
+        data = dict(zip(columns[1:], vals[1:]))
+        where_clause = f"{columns[0]} = ?"
+        where_params = (vals[0],)
+        ok = update_record(table_name, data, where_clause, where_params)
         if ok:
-            messagebox.showinfo('Thành công', 'Đã cập nhật')
+            messagebox.showinfo('Thành công', f'Đã cập nhật {table_name} thành công!')
             self._refresh_table(table_name, columns)
+        else:
+            messagebox.showerror('Lỗi', f'Không thể cập nhật {table_name}. Lỗi cơ sở dữ liệu.')
+        self.set_status('Sẵn sàng')
 
     def _on_delete(self, table_name, columns):
+        self.set_status('Đang xóa...')
         pk = columns[0]
         pkval = self.form_entries[pk].get().strip()
         if not pkval:
             messagebox.showwarning('Lỗi', 'Chọn hoặc nhập Mã để xóa')
+            self.set_status('Sẵn sàng')
             return
         if not messagebox.askyesno('Xác nhận', f'Bạn có chắc muốn xóa {pkval}?'):
+            self.set_status('Sẵn sàng')
             return
-        ok = self.delete_record(table_name, pk, pkval)
+        where_clause = f"{pk} = ?"
+        where_params = (pkval,)
+        ok = delete_record(table_name, where_clause, where_params)
         if ok:
-            messagebox.showinfo('Thành công', 'Đã xóa')
+            messagebox.showinfo('Thành công', f'Đã xóa {table_name} thành công!')
             self._refresh_table(table_name, columns)
+        else:
+            messagebox.showerror('Lỗi', f'Không thể xóa {table_name}. Lỗi cơ sở dữ liệu.')
+        self.set_status('Sẵn sàng')
 
     def _on_search(self, table_name, columns, term):
         tree = getattr(self, 'current_tree', None)
@@ -434,9 +536,71 @@ class App:
         if not term:
             self._refresh_table(table_name, columns)
             return
-        rows = self.search_records(table_name, columns, term)
+        rows = search_records(table_name, columns, term)
         for row in rows:
             tree.insert('', tk.END, values=row)
+
+    def _validate_data(self, table_name, columns, vals):
+        """Validate input data before insert/update"""
+        for i, col in enumerate(columns):
+            val = vals[i]
+            if table_name == 'HoaDon' and col == 'MaHD':
+                continue  # MaHD is auto-generated
+            if not val:
+                messagebox.showwarning('Lỗi', f'{col} không được để trống')
+                return False
+            if col in ['GiaNhap', 'GiaBan']:
+                if not val.isdigit() or int(val) <= 0:
+                    messagebox.showwarning('Lỗi', f'{col} phải là số dương')
+                    return False
+            elif col == 'SoLuong':
+                if not val.isdigit() or int(val) < 0:
+                    messagebox.showwarning('Lỗi', f'{col} phải là số không âm')
+                    return False
+            elif col in ['SDT']:
+                if val and not val.isdigit():
+                    messagebox.showwarning('Lỗi', f'{col} phải là số')
+                    return False
+            # Check foreign keys for HoaDon
+            if table_name == 'HoaDon':
+                if col == 'MaNV':
+                    if not self._check_exists('NhanVien', 'MaNV', val):
+                        messagebox.showwarning('Lỗi', f'Mã nhân viên {val} không tồn tại')
+                        return False
+                elif col == 'MaKH':
+                    if not self._check_exists('KhachHang', 'MaKH', val):
+                        messagebox.showwarning('Lỗi', f'Mã khách hàng {val} không tồn tại')
+                        return False
+                elif col == 'MaXe':
+                    if not self._check_exists('XeMay', 'MaXe', val):
+                        messagebox.showwarning('Lỗi', f'Mã xe {val} không tồn tại')
+                        return False
+            # Add more validations as needed
+        return True
+
+    def _check_exists(self, table, column, value):
+        """Check if value exists in table.column"""
+        from modules.data import load_data
+        data = load_data(table)
+        for row in data:
+            if str(row[0]) == str(value):  # Assuming first column is key
+                return True
+        return False
+
+    def _calculate_total(self):
+        """Calculate TongThanhTien = GiaBan * SoLuong for HoaDon"""
+        gia_ent = self.form_entries.get('GiaBan')
+        qty_ent = self.form_entries.get('SoLuong')
+        total_ent = self.form_entries.get('TongThanhTien')
+        if gia_ent and qty_ent and total_ent:
+            gia_str = gia_ent.get().strip()
+            qty_str = qty_ent.get().strip()
+            if gia_str.isdigit() and qty_str.isdigit():
+                gia = int(gia_str)
+                qty = int(qty_str)
+                total = gia * qty
+                total_ent.delete(0, tk.END)
+                total_ent.insert(0, str(total))
 
 
 def create_login_window(app_or_root):

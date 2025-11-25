@@ -9,7 +9,7 @@ def load_data(table_name):
         queries = {
             'NhanVien': 'SELECT MaNV, HoLot, TenNV, Phai, NgaySinh, ChucVu FROM NhanVien',
             'KhachHang': 'SELECT MaKH, TenKH, SDT, DiaChi FROM KhachHang',
-            'XeMay': 'SELECT MaXe, TenXe, LoaiXe, HangXe, GiaBan, TinhTrang FROM XeMay',
+            'XeMay': 'SELECT MaXe, TenXe, LoaiXe, HangXe, GiaNhap, GiaBan, SoLuong FROM XeMay',
             'HoaDon': 'SELECT MaHD, NgayLap, MaNV, MaKH, MaXe, SoLuong, GiaBan, TongThanhTien FROM HoaDon'
         }
         sql = queries.get(table_name)

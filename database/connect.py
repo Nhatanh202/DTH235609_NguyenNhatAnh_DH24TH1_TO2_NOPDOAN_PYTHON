@@ -11,7 +11,7 @@ except Exception:  # ImportError or others
 DEFAULT_CONN = (
     "DRIVER={ODBC Driver 17 for SQL Server};"
     "SERVER=LAPTOP-08CQM6N0;"
-    "DATABASE=QUANLYCUAHANGXEMAY;"
+    "DATABASE=QLCHXeMay;"
     "Trusted_Connection=yes;"
 )
 

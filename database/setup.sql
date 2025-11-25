@@ -1,7 +1,7 @@
-﻿-- 1. Sử dụng CSDL (Giả định CSDL QUANLYCUAHANGXEMAY đã tồn tại)
-CREATE DATABASE QUANLYCUAHANGXEMAY;
+-- 1. Sử dụng CSDL (Giả định CSDL QUANLYCUAHANGXEMAY đã tồn tại)
+CREATE DATABASE QLCHXeMay;
 GO
-USE QUANLYCUAHANGXEMAY;
+USE QLCHXeMay;
 GO
 
 CREATE TABLE [dbo].[TaiKhoan] (
@@ -33,21 +33,23 @@ CREATE TABLE [dbo].[KhachHang] (
 );
 GO
 
--- 2.3. Bảng XEMAY (Đã thêm LoaiXe, GiaNhap, GiaBan, TinhTrang)
+-- 2.3. Bảng XEMAY (Đã thêm LoaiXe, GiaNhap, GiaBan, SoLuong)
+-- Drop old columns if exist
+IF COL_LENGTH('dbo.XeMay', 'TinhTrang') IS NOT NULL ALTER TABLE dbo.XeMay DROP COLUMN TinhTrang;
+IF COL_LENGTH('dbo.XeMay', 'MauSac') IS NOT NULL ALTER TABLE dbo.XeMay DROP COLUMN MauSac;
+IF COL_LENGTH('dbo.XeMay', 'SoKhung') IS NOT NULL ALTER TABLE dbo.XeMay DROP COLUMN SoKhung;
+-- Add SoLuong if not exist
+IF COL_LENGTH('dbo.XeMay', 'SoLuong') IS NULL ALTER TABLE dbo.XeMay ADD SoLuong INT NOT NULL DEFAULT 0;
+-- Ensure other columns exist (but since recreating, perhaps drop and recreate)
+-- For simplicity, assume table is recreated, but to fix existing, add alters
 CREATE TABLE [dbo].[XeMay] (
     [MaXe]        VARCHAR(10) PRIMARY KEY,
     [TenXe]       NVARCHAR(100) NOT NULL,
     [LoaiXe]      NVARCHAR(20)  NULL,       -- Cột mới
     [HangXe]      NVARCHAR(50)  NULL,
-    [MauSac]      NVARCHAR(30)  NULL,
     [GiaNhap]     DECIMAL(12, 0) NOT NULL,  -- Cột mới (Giả định là giá vốn)
     [GiaBan]      DECIMAL(12, 0) NULL,      -- Cột mới (Giá bán niêm yết/đề xuất)
-    [SoKhung]     VARCHAR(20) UNIQUE,
-    [TinhTrang]   NVARCHAR(50)  NULL DEFAULT N'Mới 100%' -- Cột mới
-);
-GO
-
------------------------------------------------------------------
+    [SoLuong]     INT           NOT NULL DEFAULT 0 -- Cột mới: Số lượng tồn kho
 -- 3. TẠO BẢNG TRANSACTION (HOADON) - KHÔNG ĐỔI
 -----------------------------------------------------------------
 
@@ -74,6 +76,8 @@ GO
 -----------------------------------------------------------------
 
 PRINT N'--- Chèn dữ liệu Master ĐÃ CẬP NHẬT ---';
+-- Tài khoản Admin mặc định
+INSERT INTO TaiKhoan (TenDangNhap, MatKhau) VALUES ('admin', '123');
 -- Dữ liệu NhanVien mới
 INSERT INTO NhanVien (MaNV, TenNV, HoLot, Phai, ChucVu, NgaySinh) VALUES
 ('NV001', N'Anh', N'Nguyễn Nhất', N'Nam', N'Quản lý', '2000-01-01'),
@@ -85,9 +89,9 @@ INSERT INTO KhachHang (MaKH, TenKH, SDT, DiaChi) VALUES
 ('KH002', N'Lê Thị B', '090222333', N'Cần Thơ');
 
 -- Dữ liệu XeMay mới
-INSERT INTO XeMay (MaXe, TenXe, LoaiXe, HangXe, MauSac, GiaNhap, GiaBan, SoKhung, TinhTrang) VALUES
-('XM001', N'Vision', N'Xe ga', N'Honda', N'Đỏ', 25000000, 30000000, 'VIN12345', N'Mới 100%'),
-('XM002', N'Exciter 155', N'Xe côn', N'Yamaha', N'Xanh', 40000000, 48000000, 'VIN67890', N'Mới 100%');
+INSERT INTO XeMay (MaXe, TenXe, LoaiXe, HangXe, GiaNhap, GiaBan, SoLuong) VALUES
+('XM001', N'Vision', N'Xe ga', N'Honda', 25000000, 30000000, 10),
+('XM002', N'Exciter 155', N'Xe côn', N'Yamaha', 40000000, 48000000, 5);
 GO
 
 PRINT N'--- Chèn dữ liệu Hóa Đơn ---';
@@ -99,7 +103,8 @@ GO
 PRINT N'--- Tạo CSDL và chèn dữ liệu mẫu thành công! ---';
 GO
 
-SELECT * FROM XeMay
-SELECT * FROM NhanVien
+SELECT * FROM TaiKhoan
 SELECT * FROM KhachHang
+SELECT * FROM NhanVien
+SELECT * FROM XeMay
 SELECT * FROM HoaDon
