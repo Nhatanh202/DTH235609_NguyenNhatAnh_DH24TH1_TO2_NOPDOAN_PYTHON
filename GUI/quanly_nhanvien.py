@@ -166,7 +166,7 @@ def create_ui(parent_frame):
             var_trangthai.set(vals[4])
 
     # --- 4. THIẾT KẾ LAYOUT ---
-    Label(parent_frame, text="QUẢN LÝ NHÂN SỰ", font=("Arial", 18, "bold"), fg="#2c3e50", bg=BG_COLOR).pack(pady=10)
+    Label(parent_frame, text="QUẢN LÝ NHÂN VIÊN", font=("Arial", 18, "bold"), fg="#2c3e50", bg=BG_COLOR).pack(pady=10)
 
     # FORM
     frame_info = LabelFrame(parent_frame, text="Thông tin nhân viên", bg=BG_COLOR, font=("Arial", 10, "bold"), padx=10, pady=10)
