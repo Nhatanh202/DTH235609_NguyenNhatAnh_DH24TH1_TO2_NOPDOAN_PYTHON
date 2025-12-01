@@ -2,6 +2,8 @@ from tkinter import *
 from tkinter import ttk, messagebox
 from datetime import datetime 
 import utils
+from openpyxl import Workbook
+from tkinter import filedialog
 
 def create_ui(parent_frame):
     # --- 1. BIẾN DỮ LIỆU ---
@@ -28,6 +30,39 @@ def create_ui(parent_frame):
 
     current_mode = "VIEW"
     BG_COLOR = getattr(utils, 'MAIN_BG', 'white')
+
+    def export_to_excel():
+        try:
+            # Chọn đường dẫn lưu file
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+                title="Lưu file Excel"
+            )
+            if not file_path:
+                return
+            # Tạo workbook và worksheet
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Danh sách hóa đơn"
+            
+            # Thêm tiêu đề
+            headers = ["Mã HĐ", "Nhân Viên", "Khách Hàng", "Tên Xe", "Số Khung", "Ngày Bán", "Tổng Tiền", "Ghi Chú", "Màu"]
+            for col_num, header in enumerate(headers, 1):
+                ws.cell(row=1, column=col_num, value=header)
+            
+            # Thêm dữ liệu từ treeview
+            for row_num, item in enumerate(tree.get_children(), 2):
+                values = tree.item(item, 'values')
+                for col_num, value in enumerate(values, 1):
+                    ws.cell(row=row_num, column=col_num, value=value)
+            
+            # Lưu file
+            wb.save(file_path)
+            messagebox.showinfo("Thành công", f"Đã xuất dữ liệu ra file:\n{file_path}")
+            
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể xuất file Excel:\n{str(e)}")
 
     # --- 2. HÀM DATABASE ---
     def load_combobox_data():
@@ -343,7 +378,8 @@ def create_ui(parent_frame):
     Label(frame_search, text="Tìm:", bg=BG_COLOR).pack(side=RIGHT)
     # Nút làm mới danh sách
     Button(frame_search, text="↻", command=reset_search, font=("Arial", 10, "bold"), width=3).pack(side=RIGHT, padx=5)
-
+    Button(frame_search, text="Xuất File Excel", command=export_to_excel, font=("Arial", 10, "bold"), width=15 ).pack(side=RIGHT, padx=5)
+    
     frame_tree = Frame(parent_frame, bg="white")
     frame_tree.pack(fill=BOTH, expand=True, padx=20, pady=10)
 

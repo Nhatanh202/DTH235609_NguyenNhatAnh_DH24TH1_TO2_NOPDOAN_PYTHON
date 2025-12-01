@@ -19,6 +19,42 @@ class MainApp:
         
         utils.setup_theme(root)
 
+        
+        menubar = Menu(self.root)
+        self.root.config(menu=menubar) # Gắn menu vào cửa sổ chính
+        sys_menu = Menu(menubar, tearoff=0) 
+        menubar.add_cascade(label="Hệ Thống", menu=sys_menu)
+        
+        # Thêm các mục con
+        sys_menu.add_command(label="Trang Chủ", command=self.show_home)
+        sys_menu.add_command(label="Thông tin tài khoản", command=self.show_thongtin_taikhoan)
+        sys_menu.add_separator() # Kẻ ngang phân cách
+        sys_menu.add_command(label="Đăng Xuất", command=self.logout)
+
+        # --- MENU 2: QUẢN LÝ (Xe, Khách, Nhân viên...) ---
+        manage_menu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Quản Lý", menu=manage_menu)
+        
+        manage_menu.add_command(label="Quản lý xe máy", command=self.show_xemay)
+        manage_menu.add_command(label="Quản lý khách hàng", command=self.show_khachhang)
+
+        # Phân quyền: Chỉ hiện nếu đúng vai trò
+        if self.role in ['Admin', 'QuanLy']:
+            manage_menu.add_command(label="Quản lý nhân viên", command=self.show_nhanvien)
+        
+        if self.role == 'Admin':
+            manage_menu.add_separator()
+            manage_menu.add_command(label="Quản lý tài khoản (Admin)", command=self.show_taikhoan)
+
+        # --- MENU 3: GIAO DỊCH (Bán hàng) ---
+        trade_menu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Giao Dịch", menu=trade_menu)
+        
+        trade_menu.add_command(label="Lập Hóa Đơn & Bán Hàng", command=self.show_hoadon)
+
+
+
+
         # --- LAYOUT CHÍNH: CHIA 2 CỘT ---
         # Cột 1: Menu bên trái (Sidebar)
         self.sidebar = Frame(root, bg=utils.BTN_PRIMARY, width=250)
@@ -28,7 +64,7 @@ class MainApp:
         # Cột 2: Nội dung bên phải
         self.content_area = Frame(root, bg="white")
         self.content_area.pack(side=RIGHT, fill=BOTH, expand=True)
-
+    
         # --- NỘI DUNG SIDEBAR ---
         # Info user
         Label(self.sidebar, text=f"XIN CHÀO,\n{fullname}", font=("Roboto", 12, "bold"), 
@@ -41,8 +77,8 @@ class MainApp:
         
         Label(self.sidebar, text=f"Vai trò: {role}", font=("Roboto", 10, "italic"), 
               bg=utils.BTN_PRIMARY, fg="white").pack(pady=(5, 20)) # Giảm khoảng cách trên
-
-        # MENU BUTTONS
+    
+        # MENU BUTTONS (SIDEBAR) - GIỮ NGUYÊN
         self.create_nav_btn("Trang Chủ", self.show_home)
 
         self.create_nav_btn("Quản Lý Xe Máy", self.show_xemay)
@@ -59,13 +95,13 @@ class MainApp:
 
         self.create_nav_btn("Thông Tin Tài Khoản", self.show_thongtin_taikhoan)
         
-        # Nút Đăng xuất ở dưới cùng
+        # Nút Đăng xuất ở dưới cùng sidebar
         Button(self.sidebar, text="Đăng Xuất", command=self.logout, 
                bg="#c0392b", fg="white", relief="flat").pack(side=BOTTOM, fill=X, pady=10, padx=10)
 
         # Mặc định hiện trang chủ
         self.show_home()
-
+    
     def logout(self):
         self.root.destroy()
         # Import tại đây để tránh lỗi import vòng
@@ -100,7 +136,7 @@ class MainApp:
         label_img = Label(center_frame, image=img_tk, bg="white")
         label_img.image = img_tk  # Giữ tham chiếu để ảnh không bị
         label_img.pack(pady=(0, 10)) # Khoảng cách dưới logo
-
+        
         # Text
         Label(center_frame, text="QUẢN LÝ CỬA HÀNG XE MÁY", 
               font=("Roboto", 24, "bold"), fg=utils.BTN_PRIMARY, bg="white").pack()
@@ -133,3 +169,4 @@ def main_screen(role, fullname):
     root = Tk()
     app = MainApp(root, role, fullname)
     root.mainloop()
+    

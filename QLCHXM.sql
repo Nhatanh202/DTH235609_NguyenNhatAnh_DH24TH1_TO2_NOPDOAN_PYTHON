@@ -14,10 +14,10 @@ CREATE TABLE NhanVien (
 );
 GO
 
--- 2. Bảng Xe Máy (Đã bỏ cột TrangThai theo yêu cầu)
+-- 2. Bảng Xe Máy
 CREATE TABLE XeMay (
-    SoKhung VARCHAR(17) NOT NULL PRIMARY KEY, -- Giữ nguyên khóa chính
-    LoaiXe NVARCHAR(30),                      -- THAY ĐỔI: Thay cho SoMay (VD: Tay ga, Xe số)
+    SoKhung VARCHAR(17) NOT NULL PRIMARY KEY, 
+    LoaiXe NVARCHAR(30),                      
     TenXe NVARCHAR(50),
     HangSanXuat NVARCHAR(50),
     MauSac NVARCHAR(20),
